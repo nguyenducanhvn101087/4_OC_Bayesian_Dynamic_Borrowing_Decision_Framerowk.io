@@ -1,0 +1,106 @@
+model
+{
+    for (i in 1:ns) {
+        prec_w[i, 1:2, 1:2] <- inverse(Sigma[i, 1:2, 1:2])
+        Sigma[i, 1, 1] <- pow(se[i, 1], 2)
+        Sigma[i, 2, 2] <- pow(se[i, 2], 2)
+        Sigma[i, 1, 2] <- sqrt(Sigma[i, 1, 1]) * sqrt(Sigma[i, 
+            2, 2]) * rho_w[i]
+        Sigma[i, 2, 1] <- sqrt(Sigma[i, 1, 1]) * sqrt(Sigma[i, 
+            2, 2]) * rho_w[i]
+        y[i, 1:2] ~ dmnorm(delta[i, 1:2], prec_w[i, 1:2, 1:2])
+        delta[i, 1:2] ~ dmnorm(md[i, 1:2], prec_b[i, 1:2, 1:2])
+        for (j in 1:2) {
+            md[i, j] <- d[t[i, 2], j] - d[t[i, 1], j]
+        }
+        prec_b[i, 1:2, 1:2] <- inverse(Cov_b[tc[i], , ])
+    }
+    for (ic in 1:nc) {
+        for (j in 1:2) {
+            Cov_b[ic, j, j] <- tau.sq[ic, j]
+            tau.sq[ic, j] <- psi.sq[(td[ic, 1] - 1) * 2 + j] + 
+                psi.sq[(td[ic, 2] - 1) * 2 + j]
+            -2 * rho_psi[(td[ic, 1] - 1) * 2 + j, (td[ic, 2] - 
+                1) * 2 + j] * psi[(td[ic, 1] - 1) * 2 + j] * 
+                psi[(td[ic, 2] - 1) * 2 + j]
+        }
+        Cov_b[ic, 1, 2] <- psi[(td[ic, 1] - 1) * 2 + 1] * psi[(td[ic, 
+            1] - 1) * 2 + 2] * rho_psi[(td[ic, 1] - 1) * 2 + 
+            1, (td[ic, 1] - 1) * 2 + 2]
+        -psi[(td[ic, 1] - 1) * 2 + 1] * psi[(td[ic, 2] - 1) * 
+            2 + 2] * rho_psi[(td[ic, 1] - 1) * 2 + 1, (td[ic, 
+            2] - 1) * 2 + 2]
+        -psi[(td[ic, 2] - 1) * 2 + 1] * psi[(td[ic, 1] - 1) * 
+            2 + 2] * rho_psi[(td[ic, 2] - 1) * 2 + 1, (td[ic, 
+            1] - 1) * 2 + 2]
+        +psi[(td[ic, 2] - 1) * 2 + 1] * psi[(td[ic, 2] - 1) * 
+            2 + 2] * rho_psi[(td[ic, 2] - 1) * 2 + 1, (td[ic, 
+            2] - 1) * 2 + 2]
+        Cov_b[ic, 2, 1] <- Cov_b[ic, 1, 2]
+        rho_b[ic] <- Cov_b[ic, 1, 2]/sd[ic, 1]/sd[ic, 2]
+        sd[ic, 1] <- sqrt(tau.sq[ic, 1])
+        sd[ic, 2] <- sqrt(tau.sq[ic, 2])
+        lambda0[ic] <- (d[td[ic, 2], 2] - d[td[ic, 1], 2])
+        -(d[td[ic, 2], 1] - d[td[ic, 1], 1]) * rho_b[ic] * sd[ic, 
+            2]/sd[ic, 1]
+        lambda1[ic] <- rho_b[ic] * sd[ic, 2]/sd[ic, 1]
+        big.psi.sq[ic] <- tau.sq[ic, 2] - pow(lambda1[ic], 2) * 
+            tau.sq[ic, 1]
+    }
+    for (j in 1:2) {
+        d[1, j] <- 0.00000E+00
+    }
+    for (k in 1:nt2) {
+        psi[k] ~ dunif(0.00000E+00, 2)
+        psi.sq[k] <- pow(psi[k], 2)
+        rho_psi[k, k] <- 1
+    }
+    for (k in 2:nt) {
+        d[k, 1] ~ dnorm(0.00000E+00, 0.001)
+        d[k, 2] ~ dnorm(0.00000E+00, 0.001)
+    }
+    L[1, 1] <- 1
+    for (k in 2:nt2) {
+        L.u[1, k] ~ dunif(-0.999, 0.999)
+        L[1, k] <- L.u[1, k]
+    }
+    for (x in 1:nt2 - 1) {
+        for (k in x + 1:nt2) {
+            p[x, k] <- pow(L[x, k], 2)
+        }
+    }
+    for (x in 3:nt2) {
+        for (k in x:nt2) {
+            s[x - 1, k] <- sum(p[1:x - 2, k])
+            lim[x - 1, k] <- sqrt(1 - s[x - 1, k])
+            L.u[x - 1, k] ~ dunif(-0.999, 0.999)
+            L[x - 1, k] <- lim[x - 1, k] * L.u[x - 1, k]
+        }
+    }
+    L.u[2, 2] <- sqrt(1 - pow(L[1, 2], 2))
+    L[2, 2] <- L.u[2, 2]
+    for (k in 3:nt2) {
+        s2[k] <- sum(p[1:k - 1, k])
+        L.u[k, k] <- sqrt(1 - s2[k])
+        L[k, k] <- L.u[k, k]
+    }
+    for (k in 2:nt2) {
+        rho_psi[1, k] <- L[1, k]
+        rho_psi[k, 1] <- L[1, k]
+    }
+    for (x in 2:nt2 - 1) {
+        for (k in x + 1:nt2) {
+            for (j in 1:x) {
+                LL[j, x, k] <- L[j, x] * L[j, k]
+            }
+        }
+    }
+    for (x in 2:nt2 - 2) {
+        for (k in x + 1:nt2) {
+            rho_psi[x, k] <- sum(LL[1:x, x, k])
+            rho_psi[k, x] <- rho_psi[x, k]
+        }
+    }
+    rho_psi[nt2 - 1, nt2] <- sum(LL[1:nt2 - 1, nt2 - 1, nt2])
+    rho_psi[nt2, nt2 - 1] <- rho_psi[nt2 - 1, nt2]
+}

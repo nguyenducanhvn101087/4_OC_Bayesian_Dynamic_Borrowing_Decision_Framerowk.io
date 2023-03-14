@@ -1,0 +1,26 @@
+model
+{
+    for (i in 1:ns) {
+        prec_w[i, 1:2, 1:2] <- inverse(Sigma[i, 1:2, 1:2])
+        Sigma[i, 1, 1] <- pow(se[i, 1], 2)
+        Sigma[i, 2, 2] <- pow(se[i, 2], 2)
+        Sigma[i, 1, 2] <- se[i, 1] * se[i, 2] * rho_w
+        Sigma[i, 2, 1] <- se[i, 1] * se[i, 2] * rho_w
+    }
+    for (i in 1:ns) {
+        y[i, 1:2] ~ dmnorm(mu[i, 1:2], prec_w[i, 1:2, 1:2])
+        mu[i, 1] <- mu1[i]
+        mu1[i] ~ dnorm(0.00000E+00, a)
+        mu[i, 2] ~ dnorm(tmp[i], inv.big.psi.sq)
+        tmp[i] <- lambda0 + lambda1 * mu1[i]
+        y_new[i, 1:2] ~ dmnorm(mu[i, 1:2], prec_w[i, 1:2, 1:2])
+    }
+    lambda0 ~ dnorm(0.00000E+00, a)
+    lambda1 ~ dnorm(0.00000E+00, a)
+    inv.big.psi.sq <- 1/big.psi.sq
+    big.psi.sq <- abs(tmp2)
+    tmp2 ~ dnorm(0.00000E+00, b)
+    rho_w ~ dunif(-1, 1)
+    a <- 0.001
+    b <- 2
+}

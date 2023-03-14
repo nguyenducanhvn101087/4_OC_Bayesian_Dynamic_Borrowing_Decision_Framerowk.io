@@ -1,0 +1,3295 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anh Nguyen Duc" />
+
+
+<title>PRROC Gating - NMA - Dynamic Borrowing</title>
+
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/header-attrs-2.14/header-attrs.js"></script>
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/bootstrap-3.3.5/css/united.min.css" rel="stylesheet" />
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/navigation-1.1/tabsets.js"></script>
+<link href="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/highlightjs-9.12.0/highlight.js"></script>
+<script src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/kePrint-0.0.1/kePrint.js"></script>
+<link href="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">PRROC Gating - NMA - Dynamic Borrowing</h1>
+<h4 class="author">Anh Nguyen Duc</h4>
+<h4 class="date">14 March, 2023</h4>
+
+</div>
+
+
+<div id="utility-functions" class="section level2" number="0.1">
+<h2><span class="header-section-number">0.1</span> Utility
+functions</h2>
+<pre class="r"><code>wald.ci &lt;- function(x, n, ci.lev=.95) {
+  p &lt;- x/n
+  se&lt;- sqrt(p*(1-p)/n)
+  z &lt;- qnorm((1+ci.lev)/2) %&gt;% abs
+  p + c(-1,1)*z*se
+}
+#-------------------------------------------------------------------------------
+lor.sd &lt;- function(s1, n1, s2, n2) { 
+# get log OR and SD
+  f1 &lt;- n1 - s1
+  f2 &lt;- n2 - s2
+# x - matrix of two columns of successes (s) and failures (f)
+  x &lt;- rbind(c(s1, f1), 
+             c(s2, f2))
+  D &lt;- factor(c(&quot;s&quot;,&quot;f&quot;), levels=c(&quot;f&quot;,&quot;s&quot;))
+  m &lt;- glm(x~D, family=binomial) %&gt;% summary
+  m$coefficients[2,1:2]
+}
+#-------------------------------------------------------------------------------
+lhr.sd &lt;- function(hr, low, upp) {
+# approx log HR and SD 
+  loghr &lt;- log(hr)
+  sd &lt;- ((log(c(low,upp)) - loghr) / qnorm(.975)) %&gt;% abs %&gt;% sqrt %&gt;% mean
+  return(c(&quot;loghr&quot;=loghr, &quot;sd&quot;=sd))
+}</code></pre>
+</div>
+<div id="posterior-probability-of-true-response-ge-a-threshold"
+class="section level2" number="0.2">
+<h2><span class="header-section-number">0.2</span> Posterior probability
+of ``true’’ response <span class="math inline">\(\ge\)</span> a
+threshold</h2>
+<div id="load-data" class="section level3" number="0.2.1">
+<h3><span class="header-section-number">0.2.1</span> Load data</h3>
+<pre class="r"><code>data.raw &lt;- readxl::read_xlsx(path = &#39;PRROC.xlsx&#39;, range = cell_cols(&#39;A:M&#39;))
+data.use &lt;- data.raw %&gt;% dplyr::filter(dynamic_borrow_SAT==&#39;Y&#39;)
+data.use &lt;- data.use[,c(1:3, data.use%&gt;%ncol)]
+data.use &lt;- data.use[-2,,drop=F] # as per clinical team =&gt; remove Adavo
+data.use %&gt;% kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+study
+</th>
+<th style="text-align:right;">
+res_a
+</th>
+<th style="text-align:right;">
+n_a
+</th>
+<th style="text-align:left;">
+des
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:left;">
+Konstantinopoulos PA, Lancet Oncol. 2020
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div
+id="winbugs-model-for-binary-exnex-model-with-dynamic-stochastic-mixture-weights"
+class="section level3" number="0.2.2">
+<h3><span class="header-section-number">0.2.2</span> WinBUGs model for
+binary EXNEX model with dynamic (stochastic) mixture weights</h3>
+<p>This is based on section 5.3 of <a
+href="https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&amp;file=pst1730-sup-0001-supplementary.pdf"
+class="uri">https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&amp;file=pst1730-sup-0001-supplementary.pdf</a></p>
+<p>Original paper is <a
+href="https://onlinelibrary.wiley.com/doi/epdf/10.1002/pst.1730"
+class="uri">https://onlinelibrary.wiley.com/doi/epdf/10.1002/pst.1730</a></p>
+<pre class="r"><code>### Model definition when mixture weights are stochastic
+binary_exnex_model_dw &lt;- function() {
+## Data to be specify in the input
+#-------------------------------------------------------------------------------
+
+# Nexch        - number of exchangeable components
+# Nmix         - number of mixture weights and must be Nexch+1
+# Nstrata      - number of strata e.g. studies or cohort (in platform trial)
+# pMix         - matrix of Nmix * Nstrata mixture weights (each col summing up to 1)
+# n            - vector of Nstrata elements storing patient numbers for each stratum
+# r            - vector of Nstrata elements storing response numbers for each stratum
+
+# mu.mean      - vector of Nexch prior mean(s)
+# mu.prec      - vector of Nexch prior precision(s)
+# tau.HN.scale - scale parameter of Half-Normal prior for tau
+# ------- no longer needed -----------------------------------------------------
+# nex.mean     - prior mean for non-exchangeable component
+# nex.prec     - prior precision for non-exchangeable component
+# ------- end of no longer needed ----------------------------------------------
+# p.cut        - clinically relevant threshold for response rate to compare against
+  
+## Parameter(s) to be monitored
+# p            - posterior response rate
+# logit_p      - logit(p) i.e. log odd
+# p.success    - posterior indicator if p &gt; p.cut
+# p.failure    - posterior indicator if p &lt; p.cut
+# pMix         - posterior mixture weight to test for &quot;exchangeability&quot;
+
+#-------------------------------------------------------------------------------
+  
+  # prior distributions for EX-parameters
+  for (jj in 1:Nexch) {
+    mu[jj] ~dnorm(mu.mean[jj],mu.prec[jj])
+    prior.tau.prec[jj] &lt;- pow(tau.HN.scale[jj],-2)
+    tau[jj] ~ dnorm(0,prior.tau.prec[jj]);I(0.001,)
+    prec.tau[jj] &lt;- pow(tau[jj],-2)
+  }
+  
+  # log-odds parameters under EX
+  for (jj in 1:Nexch) {
+    for (j in 1:Nstrata) {
+      re[jj,j] ~ dnorm(0,prec.tau[jj])
+      LogOdds[jj,j] &lt;- mu[jj]+re[jj,j]
+    }
+  }
+  
+  # log-odds parameters under NEX
+  for (j in 1:Nstrata) {
+    #p_Nmix[j] ~ dbeta(2,2) # slight mod to have flat prior
+    #LogOdds[Nmix,j] ~ dnorm(nex.mean,nex.prec)#&lt;- logit(p_Nmix[j])#
+
+    # LogOdds[Nmix,j] ~ dt(0, 2, 1) #Student&#39;s t-distribution becomes the Cauchy distribution when the degrees of freedom is equal to one
+    LogOdds[Nmix,j] ~ dunif(-20, 20)
+    
+  }
+  
+  # latent mixture indicators:
+  # exch.index: categorial 1,...,Nmix=Nexch+1
+  # exch: Nstrata x Nmix matrix of 0/1 elements
+  for (j in 1:Nstrata) {
+    exch.index[j] ~ dcat(pMix[1:Nmix,j])
+    for (jj in 1:Nmix) {
+      exch[j,jj] &lt;- equals(exch.index[j],jj)
+    }
+  }
+  
+  # pick theta
+  for (j in 1:Nstrata) {
+    theta[j] &lt;- LogOdds[exch.index[j],j]
+  }
+  
+  # likelihood part
+  for (i in 1:Nstrata) {
+    logit( p[i] ) &lt;- theta[i]
+    p.success[i]  &lt;- step(p[i]-p.cut)
+    p.failure[i]  &lt;- step(p.cut-p[i])
+    r[i] ~ dbin(p[i],n[i])
+    logit_p[i] &lt;- theta[i]
+  }
+  
+  # normalized mixture weights
+  for (i in 1:Nstrata) {
+    for (j in 1:Nmix) {
+      pMix0[j,i] ~ dbeta(2, 2)
+    }
+  
+    for (j in 1:Nmix) {
+      pMix[j,i] &lt;- pMix0[j,i] / sum(pMix0[,i])
+    }    
+  }
+
+  
+} # end of binary_exnex_model_dw
+
+write.model(binary_exnex_model_dw, &#39;binary_exnex_model_dw.bug&#39;)
+
+### Parameters to monitor
+parameters_binary_exnex_model_dw &lt;- c(&#39;p&#39;, &#39;logit_p&#39;, &#39;pMix&#39;, &#39;p.success&#39;, &#39;p.failure&#39;)
+
+### Data
+
+## EX part
+mu.mean &lt;- c(logit(.05), logit(.3)) # ex prior for hyper meanis centered at logit(0.05)
+# ex precision  for hyperpar mean based on (23) of https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&amp;file=pst1730-sup-0001-supplementary.pdf
+mu.prec &lt;- 1/sqrt( ( 1/inv.logit(mu.mean) + 1/(1-inv.logit(mu.mean)) )) # still missing s^2 but this would only make the prior more non-informative
+
+Nexch   &lt;- mu.mean %&gt;% length
+
+tau.HN.scale &lt;- rep(1, Nexch)
+
+# ## NEX part - no longer needed
+# nex.mean&lt;-logit(.15) # prior mean for nex part
+# 
+# # prior precision for nex part based on (20) of https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&amp;file=pst1730-sup-0001-supplementary.pdf
+# nex.prec &lt;- 1/sqrt( 1/inv.logit(nex.mean) + 1/(1-inv.logit(nex.mean))  * 1e5 ) 
+
+p.cut&lt;-.15
+
+Nmix    &lt;- Nexch + 1
+
+obs.orrs &lt;- c(.05, .1, .15, .2, .25, .3, .35) # would-be observed ORR from expansion cohort
+npt      &lt;- 20 # number of patients from expansion cohort
+
+data_binary_exnex_model_dw &lt;- binary_exnex_jag_dw &lt;- binary_exnex_mcmc_dw &lt;- list()
+
+
+## Run JAGs
+for (id in 1:length(obs.orrs)) {
+  
+  print(paste0(&#39;Observed ORR = &#39;, obs.orrs[id]))
+  
+  orr &lt;- obs.orrs[id]
+  n   &lt;- c(data.use$n_a, npt)
+  r   &lt;- c(data.use$res_a, orr*npt) %&gt;% round
+  
+  Nstrata &lt;- n %&gt;% length
+  
+  data_binary_exnex_model_dw[[id]]&lt;- list(Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata,
+                                          n=n, r=r,
+                                          mu.mean=mu.mean, mu.prec=mu.prec,
+                                          tau.HN.scale=tau.HN.scale,
+                                          # nex.mean=nex.mean, nex.prec=nex.prec, 
+                                          p.cut=p.cut
+                                          )
+  ### Inits
+  inits_binary_exnex_model_dw &lt;- function() {
+    pMix0 &lt;- rbeta(Nmix*Nstrata, 2, 2) %&gt;% matrix(nrow=Nstrata) %&gt;% t
+    for (nc in 1:ncol(pMix0)) {
+      pMix0[,nc] &lt;- pMix0[,nc] / sum(pMix0[,nc])
+    }
+    
+    list(
+      &quot;mu&quot;=rnorm(Nexch),
+      &quot;tau&quot;=rnorm(Nexch) %&gt;% abs,
+      &quot;pMix0&quot;=pMix0
+      )  
+  } # end of inits_binary_exnex_model_dw  
+  
+  # JAGS
+  set.seed(36)
+  binary_exnex_jag_dw[[id]] &lt;- jags(data = data_binary_exnex_model_dw[[id]], 
+                                  inits = inits_binary_exnex_model_dw, 
+                                  parameters.to.save = parameters_binary_exnex_model_dw,
+                                  model.file = &quot;binary_exnex_model_dw.bug&quot;,
+                                  n.chains=3, n.iter=1e4, n.burnin=5e3)
+  # print(binary_exnex_jag_dw)
+  
+  binary_exnex_mcmc_dw[[id]] &lt;- binary_exnex_jag_dw[[id]] %&gt;% as.mcmc.rjags
+  binary_exnex_mcmc_dw[[id]] %&gt;% summary %&gt;% print
+  
+  ### Credible interval for selected parameters
+  mcmcplots::caterplot(binary_exnex_jag_dw[[id]], parms = c(&#39;p&#39;))  
+  
+  ### Density plot for posterior logit alone
+  par(ask=F)
+  mcmcplots::denplot(binary_exnex_jag_dw[[id]], parms = c(paste0(&#39;logit_p[&#39;, Nstrata, &#39;]&#39;)), collapse = T, lwd=2,xlim=c(-15,15), style =&#39;plain&#39;, main=&#39;Posterior distribution of true ORR&#39;, frame.plot=F)
+  
+} # end of for (id in 1:length(obs.orrs))</code></pre>
+<pre><code>## [1] &quot;Observed ORR = 0.05&quot;</code></pre>
+<pre><code>## module glm loaded</code></pre>
+<pre><code>## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      5.406249 1.63638 0.0298760      0.0347967
+## logit_p[1]   -3.477220 0.92579 0.0169026      0.0206086
+## logit_p[2]   -3.157759 0.93867 0.0171376      0.0210759
+## p[1]          0.040427 0.03000 0.0005477      0.0006376
+## p[2]          0.055750 0.04373 0.0007983      0.0008645
+## p.failure[1]  0.991667 0.09092 0.0016600      0.0021367
+## p.failure[2]  0.957000 0.20289 0.0037043      0.0038559
+## p.success[1]  0.008333 0.09092 0.0016600      0.0021367
+## p.success[2]  0.043000 0.20289 0.0037043      0.0038559
+## pMix[1,1]     0.356830 0.13399 0.0024464      0.0025388
+## pMix[2,1]     0.332662 0.12904 0.0023560      0.0024025
+## pMix[3,1]     0.310508 0.13172 0.0024049      0.0024048
+## pMix[1,2]     0.349186 0.13515 0.0024675      0.0025419
+## pMix[2,2]     0.340464 0.13479 0.0024610      0.0025000
+## pMix[3,2]     0.310350 0.13171 0.0024046      0.0024773
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      3.954806  4.30260  4.85920  5.95840 10.0555
+## logit_p[1]   -5.608126 -3.94001 -3.36452 -2.86113 -2.0297
+## logit_p[2]   -5.346143 -3.68752 -3.06432 -2.50831 -1.5836
+## p[1]          0.003655  0.01908  0.03342  0.05411  0.1161
+## p[2]          0.004744  0.02442  0.04460  0.07528  0.1703
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  1.0000
+## pMix[1,1]     0.101048  0.26541  0.35605  0.44300  0.6395
+## pMix[2,1]     0.086325  0.24384  0.33508  0.41908  0.5895
+## pMix[3,1]     0.070152  0.21520  0.31203  0.39837  0.5808
+## pMix[1,2]     0.088978  0.25520  0.34891  0.43446  0.6386
+## pMix[2,2]     0.085868  0.24539  0.33879  0.43041  0.6103
+## pMix[3,2]     0.067372  0.21254  0.31416  0.39858  0.5685</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-1.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-2.png" width="672" /></p>
+<pre><code>## [1] &quot;Observed ORR = 0.1&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      6.245036 1.66030 0.0303128      0.0321128
+## logit_p[1]   -3.426738 0.92996 0.0169787      0.0200460
+## logit_p[2]   -2.469869 0.76142 0.0139015      0.0156842
+## p[1]          0.042505 0.03032 0.0005536      0.0006549
+## p[2]          0.094621 0.06009 0.0010970      0.0012185
+## p.failure[1]  0.995333 0.06816 0.0012445      0.0012449
+## p.failure[2]  0.837333 0.36912 0.0067392      0.0074510
+## p.success[1]  0.004667 0.06816 0.0012445      0.0012449
+## p.success[2]  0.162667 0.36912 0.0067392      0.0074510
+## pMix[1,1]     0.353092 0.13338 0.0024351      0.0024352
+## pMix[2,1]     0.331550 0.13292 0.0024269      0.0023312
+## pMix[3,1]     0.315358 0.12926 0.0023599      0.0024035
+## pMix[1,2]     0.343091 0.13676 0.0024968      0.0024973
+## pMix[2,2]     0.345275 0.13324 0.0024325      0.0024736
+## pMix[3,2]     0.311633 0.13008 0.0023749      0.0024402
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      4.543357  5.07545  5.76756  6.86127 10.6392
+## logit_p[1]   -5.583491 -3.92517 -3.27319 -2.77766 -2.0140
+## logit_p[2]   -4.099001 -2.93952 -2.42925 -1.92818 -1.1567
+## p[1]          0.003745  0.01936  0.03650  0.05854  0.1177
+## p[2]          0.016319  0.05023  0.08097  0.12695  0.2393
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  1.0000
+## pMix[1,1]     0.093423  0.26354  0.35488  0.44122  0.6237
+## pMix[2,1]     0.076554  0.24069  0.33180  0.41808  0.5937
+## pMix[3,1]     0.079667  0.22391  0.31208  0.40316  0.5803
+## pMix[1,2]     0.077277  0.25243  0.34333  0.43370  0.6171
+## pMix[2,2]     0.088507  0.25747  0.34614  0.42988  0.6106
+## pMix[3,2]     0.070527  0.21979  0.30978  0.39653  0.5768</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-3.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-4.png" width="672" /></p>
+<pre><code>## [1] &quot;Observed ORR = 0.15&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean     SD  Naive SE Time-series SE
+## deviance      6.89190 1.9450 0.0355114       0.037941
+## logit_p[1]   -3.43599 1.0253 0.0187188       0.022485
+## logit_p[2]   -1.95290 0.6743 0.0123113       0.014356
+## p[1]          0.04467 0.0352 0.0006426       0.000770
+## p[2]          0.14161 0.0762 0.0013911       0.001637
+## p.failure[1]  0.98600 0.1175 0.0021454       0.002254
+## p.failure[2]  0.60700 0.4885 0.0089187       0.010136
+## p.success[1]  0.01400 0.1175 0.0021454       0.002254
+## p.success[2]  0.39300 0.4885 0.0089187       0.010136
+## pMix[1,1]     0.35323 0.1314 0.0023989       0.002399
+## pMix[2,1]     0.33323 0.1318 0.0024071       0.002455
+## pMix[3,1]     0.31354 0.1274 0.0023260       0.002327
+## pMix[1,2]     0.33612 0.1309 0.0023905       0.002583
+## pMix[2,2]     0.35284 0.1302 0.0023762       0.002374
+## pMix[3,2]     0.31105 0.1272 0.0023222       0.002323
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      4.855422  5.43222  6.38567  7.77554 11.9726
+## logit_p[1]   -5.842875 -3.98494 -3.30146 -2.70565 -1.8970
+## logit_p[2]   -3.429114 -2.37789 -1.91224 -1.48448 -0.7131
+## p[1]          0.002892  0.01825  0.03552  0.06264  0.1305
+## p[2]          0.031398  0.08487  0.12873  0.18475  0.3289
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  1.00000  1.0000
+## pMix[1,1]     0.101458  0.26381  0.35536  0.44248  0.6173
+## pMix[2,1]     0.082578  0.24421  0.33519  0.41688  0.6074
+## pMix[3,1]     0.075572  0.22540  0.31276  0.39799  0.5645
+## pMix[1,2]     0.087190  0.24655  0.33660  0.42122  0.6082
+## pMix[2,2]     0.102202  0.26508  0.35094  0.43456  0.6220
+## pMix[3,2]     0.069378  0.22334  0.30957  0.39607  0.5626</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-5.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-6.png" width="672" /></p>
+<pre><code>## [1] &quot;Observed ORR = 0.2&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.04360 1.91373 0.0349397      0.0365530
+## logit_p[1]   -3.43720 0.99735 0.0182090      0.0233260
+## logit_p[2]   -1.55296 0.58473 0.0106756      0.0127678
+## p[1]          0.04427 0.03548 0.0006479      0.0007821
+## p[2]          0.18966 0.08410 0.0015355      0.0018194
+## p.failure[1]  0.98433 0.12420 0.0022676      0.0023101
+## p.failure[2]  0.36200 0.48066 0.0087756      0.0101693
+## p.success[1]  0.01567 0.12420 0.0022676      0.0023101
+## p.success[2]  0.63800 0.48066 0.0087756      0.0101693
+## pMix[1,1]     0.35397 0.13427 0.0024514      0.0025031
+## pMix[2,1]     0.32590 0.13013 0.0023758      0.0023779
+## pMix[3,1]     0.32014 0.13002 0.0023739      0.0023745
+## pMix[1,2]     0.33280 0.13535 0.0024711      0.0025234
+## pMix[2,2]     0.35640 0.13170 0.0024044      0.0024931
+## pMix[3,2]     0.31080 0.12673 0.0023137      0.0023139
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.066023  5.60399  6.48852  7.90446 11.8223
+## logit_p[1]   -5.736333 -3.99699 -3.31588 -2.74161 -1.8370
+## logit_p[2]   -2.744414 -1.92640 -1.52917 -1.13906 -0.5115
+## p[1]          0.003216  0.01804  0.03503  0.06056  0.1374
+## p[2]          0.060403  0.12715  0.17811  0.24249  0.3748
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  1.00000  1.00000  1.0000
+## pMix[1,1]     0.090044  0.26821  0.35330  0.43907  0.6268
+## pMix[2,1]     0.080286  0.23616  0.32723  0.41163  0.5884
+## pMix[3,1]     0.079591  0.22869  0.31645  0.40530  0.5909
+## pMix[1,2]     0.073309  0.23834  0.33540  0.41998  0.6197
+## pMix[2,2]     0.102401  0.26634  0.35584  0.44327  0.6238
+## pMix[3,2]     0.074345  0.21923  0.31198  0.39863  0.5641</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-7.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-8.png" width="672" /></p>
+<pre><code>## [1] &quot;Observed ORR = 0.25&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.27392 2.06396 0.0376826      0.0429368
+## logit_p[1]   -3.51058 1.04671 0.0191103      0.0245931
+## logit_p[2]   -1.22536 0.55348 0.0101051      0.0129431
+## p[1]          0.04262 0.03538 0.0006459      0.0007956
+## p[2]          0.24057 0.09441 0.0017237      0.0022265
+## p.failure[1]  0.98700 0.11329 0.0020684      0.0021976
+## p.failure[2]  0.17167 0.37715 0.0068858      0.0078815
+## p.success[1]  0.01300 0.11329 0.0020684      0.0021976
+## p.success[2]  0.82833 0.37715 0.0068858      0.0078815
+## pMix[1,1]     0.35923 0.13617 0.0024861      0.0025544
+## pMix[2,1]     0.32488 0.13173 0.0024050      0.0024030
+## pMix[3,1]     0.31589 0.12851 0.0023463      0.0022739
+## pMix[1,2]     0.32562 0.13338 0.0024352      0.0024353
+## pMix[2,2]     0.35932 0.13239 0.0024171      0.0023017
+## pMix[3,2]     0.31506 0.13056 0.0023837      0.0023426
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%     25%      50%      75%   97.5%
+## deviance      5.224055  5.7707  6.62991  8.13563 12.6999
+## logit_p[1]   -5.849535 -4.1063 -3.38243 -2.76281 -1.8980
+## logit_p[2]   -2.397565 -1.5843 -1.19672 -0.84807 -0.1828
+## p[1]          0.002873  0.0162  0.03285  0.05937  0.1303
+## p[2]          0.083359  0.1702  0.23206  0.29984  0.4544
+## p.failure[1]  1.000000  1.0000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.0000  0.00000  0.00000  1.0000
+## p.success[1]  0.000000  0.0000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  1.0000  1.00000  1.00000  1.0000
+## pMix[1,1]     0.101494  0.2674  0.35949  0.44000  0.6470
+## pMix[2,1]     0.079310  0.2321  0.32643  0.40911  0.5952
+## pMix[3,1]     0.083066  0.2219  0.31694  0.40103  0.5750
+## pMix[1,2]     0.082311  0.2324  0.32287  0.41365  0.6007
+## pMix[2,2]     0.103930  0.2678  0.35840  0.44669  0.6256
+## pMix[3,2]     0.074586  0.2219  0.31404  0.40022  0.5886</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-9.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-10.png" width="672" /></p>
+<pre><code>## [1] &quot;Observed ORR = 0.3&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                 Mean      SD  Naive SE Time-series SE
+## deviance      7.4494 2.15162 0.0392830       0.046467
+## logit_p[1]   -3.5774 1.12561 0.0205508       0.026923
+## logit_p[2]   -0.9736 0.52019 0.0094974       0.011666
+## p[1]          0.0416 0.03587 0.0006548       0.000804
+## p[2]          0.2856 0.09885 0.0018047       0.002164
+## p.failure[1]  0.9860 0.11751 0.0021454       0.002145
+## p.failure[2]  0.0760 0.26504 0.0048390       0.005602
+## p.success[1]  0.0140 0.11751 0.0021454       0.002145
+## p.success[2]  0.9240 0.26504 0.0048390       0.005602
+## pMix[1,1]     0.3560 0.13387 0.0024441       0.002604
+## pMix[2,1]     0.3249 0.13016 0.0023764       0.002352
+## pMix[3,1]     0.3190 0.12988 0.0023713       0.002427
+## pMix[1,2]     0.3271 0.13451 0.0024558       0.002584
+## pMix[2,2]     0.3569 0.13408 0.0024480       0.002390
+## pMix[3,2]     0.3161 0.12904 0.0023560       0.002295
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%     75%    97.5%
+## deviance      5.323740  5.92918  6.81649  8.2600 13.24478
+## logit_p[1]   -6.192496 -4.18656 -3.41103 -2.7840 -1.86316
+## logit_p[2]   -2.081239 -1.31256 -0.93724 -0.6030 -0.05381
+## p[1]          0.002041  0.01497  0.03195  0.0582  0.13433
+## p[2]          0.110934  0.21206  0.28146  0.3537  0.48655
+## p.failure[1]  1.000000  1.00000  1.00000  1.0000  1.00000
+## p.failure[2]  0.000000  0.00000  0.00000  0.0000  1.00000
+## p.success[1]  0.000000  0.00000  0.00000  0.0000  0.00000
+## p.success[2]  0.000000  1.00000  1.00000  1.0000  1.00000
+## pMix[1,1]     0.092168  0.26566  0.35452  0.4448  0.63276
+## pMix[2,1]     0.078171  0.23380  0.32641  0.4131  0.58513
+## pMix[3,1]     0.076174  0.23037  0.31926  0.4048  0.58704
+## pMix[1,2]     0.078266  0.23363  0.32644  0.4149  0.60919
+## pMix[2,2]     0.101372  0.26740  0.35580  0.4441  0.62259
+## pMix[3,2]     0.074963  0.22505  0.31729  0.3997  0.57710</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-11.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-12.png" width="672" /></p>
+<pre><code>## [1] &quot;Observed ORR = 0.35&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 18
+##    Total graph size: 77
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      7.334305 1.96971 0.0359619      0.0425898
+## logit_p[1]   -3.566673 1.02559 0.0187247      0.0268215
+## logit_p[2]   -0.733751 0.48201 0.0088003      0.0107861
+## p[1]          0.040047 0.03330 0.0006079      0.0008328
+## p[2]          0.332767 0.10142 0.0018516      0.0022812
+## p.failure[1]  0.990333 0.09786 0.0017867      0.0018860
+## p.failure[2]  0.022333 0.14779 0.0026983      0.0028826
+## p.success[1]  0.009667 0.09786 0.0017867      0.0018860
+## p.success[2]  0.977667 0.14779 0.0026983      0.0028826
+## pMix[1,1]     0.355375 0.13059 0.0023842      0.0023847
+## pMix[2,1]     0.328705 0.13026 0.0023781      0.0024163
+## pMix[3,1]     0.315920 0.12882 0.0023519      0.0023524
+## pMix[1,2]     0.323631 0.12943 0.0023631      0.0023629
+## pMix[2,2]     0.363308 0.13137 0.0023985      0.0028023
+## pMix[3,2]     0.313061 0.12670 0.0023131      0.0023630
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.413510  5.94112  6.71707  8.07111 12.9599
+## logit_p[1]   -5.902155 -4.14720 -3.43454 -2.82703 -1.9095
+## logit_p[2]   -1.692587 -1.05971 -0.71817 -0.38627  0.1635
+## p[1]          0.002726  0.01556  0.03123  0.05588  0.1290
+## p[2]          0.155436  0.25737  0.32780  0.40462  0.5408
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  1.000000  1.00000  1.00000  1.00000  1.0000
+## pMix[1,1]     0.104720  0.26574  0.35345  0.43906  0.6265
+## pMix[2,1]     0.082779  0.23828  0.33294  0.41365  0.5958
+## pMix[3,1]     0.069657  0.22393  0.31854  0.40044  0.5751
+## pMix[1,2]     0.078504  0.23395  0.32471  0.40678  0.5816
+## pMix[2,2]     0.102954  0.27570  0.36220  0.44094  0.6400
+## pMix[3,2]     0.073569  0.22340  0.31345  0.39841  0.5663</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-13.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-3-14.png" width="672" /></p>
+<pre class="r"><code>### Run MCMC</code></pre>
+</div>
+<div
+id="winbugs-model-for-binary-exnex-model-with-fixed-mixture-weights"
+class="section level3" number="0.2.3">
+<h3><span class="header-section-number">0.2.3</span> WinBUGs model for
+binary EXNEX model with fixed mixture weights</h3>
+<p>This is based on section 5.3 of <a
+href="https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&amp;file=pst1730-sup-0001-supplementary.pdf"
+class="uri">https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&amp;file=pst1730-sup-0001-supplementary.pdf</a></p>
+<p>Original paper is <a
+href="https://onlinelibrary.wiley.com/doi/epdf/10.1002/pst.1730"
+class="uri">https://onlinelibrary.wiley.com/doi/epdf/10.1002/pst.1730</a></p>
+<pre class="r"><code>### Model definition when mixture weights are stochastic
+binary_exnex_model_fw &lt;- function() {
+## Data to be specify in the input
+#-------------------------------------------------------------------------------
+
+# Nexch        - number of exchangeable components
+# Nmix         - number of mixture weights and must be Nexch+1
+# Nstrata      - number of strata e.g. studies or cohort (in platform trial)
+# n            - vector of Nstrata elements storing patient numbers for each stratum
+# r            - vector of Nstrata elements storing response numbers for each stratum
+
+# mu.mean      - vector of Nexch prior mean(s)
+# mu.prec      - vector of Nexch prior precision(s)
+# tau.HN.scale - scale parameter of Half-Normal prior for tau
+# ------- no longer needed -----------------------------------------------------
+# nex.mean     - prior mean for non-exchangeable component
+# nex.prec     - prior precision for non-exchangeable component
+# ------- end of no longer needed ----------------------------------------------
+# p.cut        - clinically relevant threshold for response rate to compare against
+  
+## Parameter(s) to be monitored
+# p            - posterior response rate
+# logit_p      - logit(p) i.e. log odd
+# p.success    - posterior indicator if p &gt; p.cut
+# p.failure    - posterior indicator if p &lt; p.cut
+# pMix         - posterior mixture weight to test for &quot;exchangeability&quot;
+
+#-------------------------------------------------------------------------------
+  
+  # prior distributions for EX-parameters
+  for (jj in 1:Nexch) {
+    mu[jj] ~dnorm(mu.mean[jj],mu.prec[jj])
+    prior.tau.prec[jj] &lt;- pow(tau.HN.scale[jj],-2)
+    tau[jj] ~ dnorm(0,prior.tau.prec[jj]);I(0.001,)
+    prec.tau[jj] &lt;- pow(tau[jj],-2)
+  }
+  
+  # log-odds parameters under EX
+  for (jj in 1:Nexch) {
+    for (j in 1:Nstrata) {
+      re[jj,j] ~ dnorm(0,prec.tau[jj])
+      LogOdds[jj,j] &lt;- mu[jj]+re[jj,j]
+    }
+  }
+  
+  # log-odds parameters under NEX
+  for (j in 1:Nstrata) {
+    #p_Nmix[j] ~ dbeta(2,2) # slight mod to have flat prior
+    #LogOdds[Nmix,j] ~ dnorm(nex.mean,nex.prec)#&lt;- logit(p_Nmix[j])#
+
+    # LogOdds[Nmix,j] ~ dt(0, 2, 1) #Student&#39;s t-distribution becomes the Cauchy distribution when the degrees of freedom is equal to one
+    LogOdds[Nmix,j] ~ dunif(-20, 20)
+    
+  }
+  
+  # latent mixture indicators:
+  # exch.index: categorial 1,...,Nmix=Nexch+1
+  # exch: Nstrata x Nmix matrix of 0/1 elements
+  for (j in 1:Nstrata) {
+    exch.index[j] ~ dcat(pMix[1:Nmix,j])
+    for (jj in 1:Nmix) {
+      exch[j,jj] &lt;- equals(exch.index[j],jj)
+    }
+  }
+  
+  # pick theta
+  for (j in 1:Nstrata) {
+    theta[j] &lt;- LogOdds[exch.index[j],j]
+  }
+  
+  # likelihood part
+  for (i in 1:Nstrata) {
+    logit( p[i] ) &lt;- theta[i]
+    p.success[i]  &lt;- step(p[i]-p.cut)
+    p.failure[i]  &lt;- step(p.cut-p[i])
+    r[i] ~ dbin(p[i],n[i])
+    logit_p[i] &lt;- theta[i]
+  }
+
+  
+} # end of binary_exnex_model_fw
+
+write.model(binary_exnex_model_fw, &#39;binary_exnex_model_fw.bug&#39;)
+
+### Parameters to monitor
+parameters_binary_exnex_model_fw &lt;- c(&#39;p&#39;, &#39;logit_p&#39;, &#39;p.success&#39;, &#39;p.failure&#39;)
+
+### Data similar to above with only difference in pMix
+
+# data_binary_exnex_model_fw_pes &lt;- binary_exnex_jag_fw_pes &lt;- binary_exnex_mcmc_fw_pes &lt;-
+# data_binary_exnex_model_fw_opt &lt;- binary_exnex_jag_fw_opt &lt;- binary_exnex_mcmc_fw_opt &lt;-
+# data_binary_exnex_model_fw_neu &lt;- binary_exnex_jag_fw_neu &lt;- binary_exnex_mcmc_fw_neu &lt;-list()
+data_binary_exnex_model_fw &lt;- binary_exnex_jag_fw &lt;- binary_exnex_mcmc_fw &lt;- list()
+
+priors &lt;- c(&#39;Pessimistic&#39;, &#39;Optimistic&#39;, &#39;Neutral&#39;)
+colors &lt;- c(&#39;gray&#39;, &#39;green&#39;, &#39;blue&#39;)
+nsim &lt;- 2e4
+
+## Run JAGs
+for (prior in priors) {
+  data_binary_exnex_model_fw[[prior]] &lt;- binary_exnex_jag_fw[[prior]] &lt;-
+  binary_exnex_mcmc_fw[[prior]]       &lt;- list()
+  
+  pMix &lt;- 
+  case_when(
+    prior==&#39;Pessimistic&#39; ~ c(1,0,0),
+    prior==&#39;Optimistic&#39;  ~ c(0,1,0),
+    prior==&#39;Neutral&#39;     ~ c(0,0,1)
+  )
+  
+  pMix &lt;- pMix %&gt;% rep(Nmix) %&gt;% matrix(nrow=Nmix, byrow = F)
+  
+  for (id in 1:length(obs.orrs)) {
+    print(paste0(prior, &#39;Prior and Observed ORR = &#39;, obs.orrs[id]))
+    
+    orr &lt;- obs.orrs[id]
+    n   &lt;- c(data.use$n_a, npt)
+    r   &lt;- c(data.use$res_a, orr*npt) %&gt;% round
+    
+    Nstrata &lt;- n %&gt;% length
+    
+    data_binary_exnex_model_fw[[prior]][[id]] &lt;- list(
+      pMix=pMix, Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata, n=n, r=r, 
+      mu.mean=mu.mean, mu.prec=mu.prec, tau.HN.scale=tau.HN.scale,
+      # nex.mean=nex.mean, nex.prec=nex.prec, 
+      p.cut=p.cut
+      )
+    
+    ### Inits
+    inits_binary_exnex_model_fw &lt;- function() {
+
+      list(
+        &quot;mu&quot;=rnorm(Nexch),
+        &quot;tau&quot;=rnorm(Nexch) %&gt;% abs
+        )  
+    } # end of inits_binary_exnex_model_fw  
+    
+    #### JAGS
+    set.seed(36)
+    binary_exnex_jag_fw[[prior]][[id]] &lt;- jags(
+      data = data_binary_exnex_model_fw[[prior]][[id]], 
+      inits = inits_binary_exnex_model_fw, 
+      parameters.to.save = parameters_binary_exnex_model_fw,
+      model.file = &quot;binary_exnex_model_fw.bug&quot;,
+      n.chains=3, n.iter=1e4, n.burnin=5e3)
+    # print(binary_exnex_jag_fw[[prior]])
+    
+    binary_exnex_mcmc_fw[[prior]][[id]] &lt;- binary_exnex_jag_fw[[prior]][[id]] %&gt;% as.mcmc.rjags
+    binary_exnex_mcmc_fw[[prior]][[id]] %&gt;% summary %&gt;% print
+    
+    ### Credible interval for selected parameters
+    mcmcplots::caterplot(binary_exnex_jag_fw[[prior]][[id]], parms = c(&#39;p&#39;))  
+    
+    ### Density plot for posterior logit alone
+    par(ask=F)
+    mcmcplots::denplot(binary_exnex_jag_fw[[prior]][[id]], parms = c(paste0(&#39;logit_p[&#39;, Nstrata, &#39;]&#39;)), collapse = T, lwd=2,xlim=c(-15,15), style =&#39;plain&#39;, main=&#39;Posterior distribution of true ORR&#39;, frame.plot=F)
+    # axis(1, seq(-15,15,5),
+    #      labels=inv.logit(seq(-15,15,5)) %&gt;% round(4), line=7)
+    # mtext(&quot;ORR&quot;,1,line=9,at=0)    
+    
+  } # end of for (id in 1:length(obs.orrs))  
+} # end of for (prior in priors)</code></pre>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.05&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      5.226335 1.38441 0.0252758       0.066243
+## logit_p[1]   -3.497976 0.84723 0.0154683       0.061010
+## logit_p[2]   -3.350508 0.86769 0.0158417       0.052457
+## p[1]          0.038425 0.02701 0.0004931       0.001454
+## p[2]          0.045268 0.03524 0.0006433       0.001791
+## p.failure[1]  0.997667 0.04826 0.0008810       0.001096
+## p.failure[2]  0.982000 0.13297 0.0024277       0.004325
+## p.success[1]  0.002333 0.04826 0.0008810       0.001096
+## p.success[2]  0.018000 0.13297 0.0024277       0.004325
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      3.959991  4.25431  4.75030  5.73778  9.0165
+## logit_p[1]   -5.562852 -3.97770 -3.41050 -2.88232 -2.1574
+## logit_p[2]   -5.335070 -3.85922 -3.27141 -2.74618 -1.8329
+## p[1]          0.003823  0.01838  0.03197  0.05303  0.1036
+## p[2]          0.004796  0.02065  0.03657  0.06030  0.1379
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  0.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-1.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-2.png" width="672" /></p>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.1&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      6.43327 1.74235 0.0318107       0.078507
+## logit_p[1]   -3.21407 0.73293 0.0133814       0.049341
+## logit_p[2]   -2.79767 0.75408 0.0137676       0.040875
+## p[1]          0.04778 0.03184 0.0005814       0.001976
+## p[2]          0.07081 0.04726 0.0008628       0.002315
+## p.failure[1]  0.98967 0.10114 0.0018466       0.003100
+## p.failure[2]  0.93267 0.25064 0.0045760       0.007920
+## p.success[1]  0.01033 0.10114 0.0018466       0.003100
+## p.success[2]  0.06733 0.25064 0.0045760       0.007920
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      4.544561  5.25369  5.97526  7.04384 11.0527
+## logit_p[1]   -4.813487 -3.66747 -3.17681 -2.69354 -1.9056
+## logit_p[2]   -4.350410 -3.29453 -2.75106 -2.25776 -1.4239
+## p[1]          0.008054  0.02490  0.04005  0.06336  0.1295
+## p[2]          0.012737  0.03576  0.06003  0.09468  0.1941
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-3.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-4.png" width="672" /></p>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.15&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.30792 1.94754 0.0355570       0.084732
+## logit_p[1]   -3.21095 0.93645 0.0170972       0.087191
+## logit_p[2]   -2.29593 0.66539 0.0121483       0.029766
+## p[1]          0.05159 0.03508 0.0006405       0.002419
+## p[2]          0.10613 0.06194 0.0011309       0.002710
+## p.failure[1]  0.98667 0.11472 0.0020944       0.003412
+## p.failure[2]  0.79767 0.40181 0.0073359       0.013248
+## p.success[1]  0.01333 0.11472 0.0020944       0.003412
+## p.success[2]  0.20233 0.40181 0.0073359       0.013248
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      4.889951  5.82866  7.06983  8.21898 12.2946
+## logit_p[1]   -5.652318 -3.63763 -3.03274 -2.56888 -1.8650
+## logit_p[2]   -3.659225 -2.74432 -2.29244 -1.83276 -1.0278
+## p[1]          0.003497  0.02564  0.04597  0.07117  0.1341
+## p[2]          0.025106  0.06041  0.09175  0.13791  0.2635
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-5.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-6.png" width="672" /></p>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.2&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.74576 2.22906 0.0406969       0.087843
+## logit_p[1]   -3.09789 0.85405 0.0155927       0.062827
+## logit_p[2]   -1.88967 0.61648 0.0112553       0.024593
+## p[1]          0.05583 0.03789 0.0006918       0.002156
+## p[2]          0.14648 0.07348 0.0013416       0.003003
+## p.failure[1]  0.97500 0.15615 0.0028509       0.006022
+## p.failure[2]  0.58567 0.49269 0.0089952       0.018163
+## p.success[1]  0.02500 0.15615 0.0028509       0.006022
+## p.success[2]  0.41433 0.49269 0.0089952       0.018163
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.093642  5.95226  7.23951  9.13057 12.9189
+## logit_p[1]   -5.223286 -3.57777 -2.97792 -2.49195 -1.7367
+## logit_p[2]   -3.116517 -2.29679 -1.87341 -1.46228 -0.7445
+## p[1]          0.005361  0.02718  0.04843  0.07642  0.1497
+## p[2]          0.042431  0.09139  0.13315  0.18812  0.3220
+## p.failure[1]  0.975000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0250
+## p.success[2]  0.000000  0.00000  0.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-7.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-8.png" width="672" /></p>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.25&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean     SD  Naive SE Time-series SE
+## deviance      7.96623 2.5869 0.0472302       0.106187
+## logit_p[1]   -3.14384 0.8798 0.0160620       0.063204
+## logit_p[2]   -1.52255 0.5994 0.0109426       0.022984
+## p[1]          0.05468 0.0394 0.0007194       0.002501
+## p[2]          0.19482 0.0872 0.0015920       0.003121
+## p.failure[1]  0.97200 0.1650 0.0030125       0.005927
+## p.failure[2]  0.33900 0.4734 0.0086440       0.014857
+## p.success[1]  0.02800 0.1650 0.0030125       0.005927
+## p.success[2]  0.66100 0.4734 0.0086440       0.014857
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%     75%   97.5%
+## deviance      5.227580  5.99368  7.15534  9.3859 14.4018
+## logit_p[1]   -5.171049 -3.66102 -3.03071 -2.5066 -1.7159
+## logit_p[2]   -2.757863 -1.91584 -1.47733 -1.1106 -0.4373
+## p[1]          0.005647  0.02506  0.04606  0.0754  0.1524
+## p[2]          0.059644  0.12833  0.18583  0.2478  0.3924
+## p.failure[1]  0.000000  1.00000  1.00000  1.0000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  1.0000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.0000  1.0000
+## p.success[2]  0.000000  0.00000  1.00000  1.0000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-9.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-10.png" width="672" /></p>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.3&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      8.04409 2.56359 0.0468045       0.096413
+## logit_p[1]   -3.10957 0.91279 0.0166652       0.071329
+## logit_p[2]   -1.21299 0.53830 0.0098280       0.018691
+## p[1]          0.05690 0.04013 0.0007326       0.002439
+## p[2]          0.24208 0.09245 0.0016880       0.003085
+## p.failure[1]  0.97067 0.16877 0.0030813       0.004917
+## p.failure[2]  0.16467 0.37094 0.0067724       0.010943
+## p.success[1]  0.02933 0.16877 0.0030813       0.004917
+## p.success[2]  0.83533 0.37094 0.0067724       0.010943
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.346497  6.12514  7.25554  9.17804 14.6461
+## logit_p[1]   -5.216117 -3.64042 -2.96463 -2.45536 -1.6978
+## logit_p[2]   -2.365457 -1.55090 -1.18652 -0.84656 -0.2135
+## p[1]          0.005399  0.02557  0.04905  0.07905  0.1548
+## p[2]          0.085845  0.17496  0.23388  0.30016  0.4468
+## p.failure[1]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[2]  0.000000  1.00000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-11.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-12.png" width="672" /></p>
+<pre><code>## [1] &quot;PessimisticPrior and Observed ORR = 0.35&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD Naive SE Time-series SE
+## deviance      8.04992 2.69714 0.049243       0.106801
+## logit_p[1]   -3.16115 0.87391 0.015955       0.061033
+## logit_p[2]   -0.95434 0.52389 0.009565       0.017359
+## p[1]          0.05397 0.03976 0.000726       0.002418
+## p[2]          0.28935 0.10141 0.001851       0.003326
+## p.failure[1]  0.97100 0.16783 0.003064       0.005412
+## p.failure[2]  0.07400 0.26181 0.004780       0.006825
+## p.success[1]  0.02900 0.16783 0.003064       0.005412
+## p.success[2]  0.92600 0.26181 0.004780       0.006825
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%     25%      50%      75%    97.5%
+## deviance      5.410558  6.1215  7.15489  9.08203 15.75000
+## logit_p[1]   -5.038565 -3.7012 -3.06632 -2.51738 -1.69603
+## logit_p[2]   -2.010895 -1.2987 -0.93078 -0.59454  0.02834
+## p[1]          0.006441  0.0241  0.04452  0.07465  0.15498
+## p[2]          0.118064  0.2144  0.28277  0.35559  0.50708
+## p.failure[1]  0.000000  1.0000  1.00000  1.00000  1.00000
+## p.failure[2]  0.000000  0.0000  0.00000  0.00000  1.00000
+## p.success[1]  0.000000  0.0000  0.00000  0.00000  1.00000
+## p.success[2]  0.000000  1.0000  1.00000  1.00000  1.00000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-13.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-14.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.05&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      5.097852 1.38124 0.0252178       0.057597
+## logit_p[1]   -3.249705 0.70837 0.0129330       0.042007
+## logit_p[2]   -3.078318 0.74726 0.0136431       0.041286
+## p[1]          0.045518 0.02891 0.0005278       0.001507
+## p[2]          0.054733 0.03825 0.0006984       0.001835
+## p.failure[1]  0.994667 0.07285 0.0013300       0.001866
+## p.failure[2]  0.970333 0.16969 0.0030982       0.004804
+## p.success[1]  0.005333 0.07285 0.0013300       0.001866
+## p.success[2]  0.029667 0.16969 0.0030982       0.004804
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      3.950933  4.21533  4.62880  5.48467  8.7576
+## logit_p[1]   -4.798086 -3.68896 -3.20679 -2.73687 -2.0481
+## logit_p[2]   -4.573679 -3.55222 -3.05789 -2.57154 -1.6997
+## p[1]          0.008178  0.02439  0.03891  0.06083  0.1142
+## p[2]          0.010215  0.02786  0.04488  0.07099  0.1545
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-15.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-16.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.1&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      6.40100 1.66557 0.0304091       0.070294
+## logit_p[1]   -3.02076 0.74088 0.0135265       0.047389
+## logit_p[2]   -2.55357 0.70580 0.0128860       0.039786
+## p[1]          0.05691 0.03512 0.0006413       0.002168
+## p[2]          0.08585 0.05206 0.0009505       0.002698
+## p.failure[1]  0.98267 0.13053 0.0023832       0.003982
+## p.failure[2]  0.87900 0.32618 0.0059552       0.012865
+## p.success[1]  0.01733 0.13053 0.0023832       0.003982
+## p.success[2]  0.12100 0.32618 0.0059552       0.012865
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      4.554539  5.28037  5.92927  7.00929 10.8558
+## logit_p[1]   -4.724397 -3.45929 -2.93480 -2.49749 -1.8036
+## logit_p[2]   -4.105696 -2.97460 -2.52701 -2.07340 -1.3058
+## p[1]          0.008798  0.03049  0.05046  0.07603  0.1414
+## p[2]          0.016211  0.04859  0.07399  0.11171  0.2132
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  0.00000  0.00000  0.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-17.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-18.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.15&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD Naive SE Time-series SE
+## deviance      7.10951 1.87364 0.034208       0.074665
+## logit_p[1]   -2.91962 0.68251 0.012461       0.038733
+## logit_p[2]   -2.15154 0.64460 0.011769       0.028225
+## p[1]          0.06093 0.03566 0.000651       0.001956
+## p[2]          0.11874 0.06349 0.001159       0.002539
+## p.failure[1]  0.97900 0.14341 0.002618       0.004396
+## p.failure[2]  0.74000 0.43871 0.008010       0.014659
+## p.success[1]  0.02100 0.14341 0.002618       0.004396
+## p.success[2]  0.26000 0.43871 0.008010       0.014659
+## 
+## 2. Quantiles for each variable:
+## 
+##                  2.5%      25%      50%     75%   97.5%
+## deviance      4.86676  5.72420  6.75223  8.0282 11.9313
+## logit_p[1]   -4.37982 -3.36006 -2.85556 -2.4383 -1.7676
+## logit_p[2]   -3.47719 -2.55182 -2.12812 -1.7172 -0.9890
+## p[1]          0.01237  0.03357  0.05439  0.0803  0.1458
+## p[2]          0.02997  0.07230  0.10639  0.1522  0.2711
+## p.failure[1]  1.00000  1.00000  1.00000  1.0000  1.0000
+## p.failure[2]  0.00000  0.00000  1.00000  1.0000  1.0000
+## p.success[1]  0.00000  0.00000  0.00000  0.0000  0.0000
+## p.success[2]  0.00000  0.00000  0.00000  1.0000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-19.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-20.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.2&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.68501 2.20668 0.0402883       0.099400
+## logit_p[1]   -2.87484 0.78226 0.0142821       0.055289
+## logit_p[2]   -1.74317 0.57420 0.0104834       0.021525
+## p[1]          0.06626 0.04180 0.0007631       0.002456
+## p[2]          0.16281 0.07531 0.0013750       0.002739
+## p.failure[1]  0.95433 0.20880 0.0038121       0.006775
+## p.failure[2]  0.49567 0.50006 0.0091299       0.015743
+## p.success[1]  0.04567 0.20880 0.0038121       0.006775
+## p.success[2]  0.50433 0.50006 0.0091299       0.015743
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%     75%   97.5%
+## deviance      5.090180  5.95097  7.18815  8.9580 12.9968
+## logit_p[1]   -4.705460 -3.36295 -2.78633 -2.3088 -1.6132
+## logit_p[2]   -2.926210 -2.11568 -1.72941 -1.3471 -0.6535
+## p[1]          0.008965  0.03347  0.05807  0.0904  0.1662
+## p[2]          0.050873  0.10758  0.15066  0.2063  0.3422
+## p.failure[1]  0.000000  1.00000  1.00000  1.0000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  1.0000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.0000  1.0000
+## p.success[2]  0.000000  0.00000  1.00000  1.0000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-21.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-22.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.25&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD Naive SE Time-series SE
+## deviance      8.00474 2.48932 0.045449       0.093778
+## logit_p[1]   -2.86737 0.79875 0.014583       0.049565
+## logit_p[2]   -1.42704 0.56388 0.010295       0.020334
+## p[1]          0.06675 0.04174 0.000762       0.002328
+## p[2]          0.20777 0.08804 0.001607       0.003177
+## p.failure[1]  0.95767 0.20138 0.003677       0.006458
+## p.failure[2]  0.28800 0.45291 0.008269       0.014628
+## p.success[1]  0.04233 0.20138 0.003677       0.006458
+## p.success[2]  0.71200 0.45291 0.008269       0.014628
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%     25%      50%      75%   97.5%
+## deviance      5.229137  6.0124  7.28316  9.37210 14.0923
+## logit_p[1]   -4.867427 -3.3139 -2.76139 -2.31276 -1.5989
+## logit_p[2]   -2.544330 -1.8045 -1.39747 -1.03833 -0.3585
+## p[1]          0.007634  0.0351  0.05945  0.09007  0.1681
+## p[2]          0.072808  0.1413  0.19822  0.26147  0.4113
+## p.failure[1]  0.000000  1.0000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.0000  0.00000  1.00000  1.0000
+## p.success[1]  0.000000  0.0000  0.00000  0.00000  1.0000
+## p.success[2]  0.000000  0.0000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-23.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-24.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.3&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      8.06505 2.58103 0.0471229       0.112782
+## logit_p[1]   -2.90565 0.80661 0.0147266       0.057491
+## logit_p[2]   -1.12673 0.54032 0.0098649       0.019785
+## p[1]          0.06492 0.04114 0.0007511       0.002323
+## p[2]          0.25750 0.09763 0.0017824       0.003265
+## p.failure[1]  0.96267 0.18961 0.0034618       0.006638
+## p.failure[2]  0.13367 0.34035 0.0062139       0.011675
+## p.success[1]  0.03733 0.18961 0.0034618       0.006638
+## p.success[2]  0.86633 0.34035 0.0062139       0.011675
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.355065  6.12887  7.28996  9.26479 14.4947
+## logit_p[1]   -4.910769 -3.33994 -2.80680 -2.33797 -1.6348
+## logit_p[2]   -2.219576 -1.48045 -1.10763 -0.75919 -0.1206
+## p[1]          0.007313  0.03423  0.05696  0.08803  0.1632
+## p[2]          0.098006  0.18536  0.24831  0.31882  0.4699
+## p.failure[1]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[2]  0.000000  1.00000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-25.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-26.png" width="672" /></p>
+<pre><code>## [1] &quot;OptimisticPrior and Observed ORR = 0.35&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      8.03732 2.66292 0.0486180       0.109936
+## logit_p[1]   -2.97709 0.83824 0.0153041       0.057918
+## logit_p[2]   -0.84822 0.51380 0.0093807       0.016722
+## p[1]          0.06227 0.04308 0.0007866       0.002667
+## p[2]          0.31015 0.10325 0.0018852       0.003255
+## p.failure[1]  0.95433 0.20880 0.0038121       0.007651
+## p.failure[2]  0.04767 0.21310 0.0038906       0.005346
+## p.success[1]  0.04567 0.20880 0.0038121       0.007651
+## p.success[2]  0.95233 0.21310 0.0038906       0.005346
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.404496  6.08619  7.20430  9.17737 15.4137
+## logit_p[1]   -4.891632 -3.48934 -2.89470 -2.37942 -1.5935
+## logit_p[2]   -1.918281 -1.18048 -0.82186 -0.51066  0.1039
+## p[1]          0.007453  0.02962  0.05242  0.08476  0.1689
+## p[2]          0.128053  0.23497  0.30537  0.37504  0.5260
+## p.failure[1]  0.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[2]  0.000000  1.00000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-27.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-28.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.05&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      6.23067 2.26930 0.0414315      0.0445770
+## logit_p[1]   -4.06923 1.27516 0.0232811      0.0242948
+## logit_p[2]   -3.53343 1.31085 0.0239328      0.0239355
+## p[1]          0.02894 0.02822 0.0005152      0.0005152
+## p[2]          0.04860 0.04618 0.0008431      0.0008431
+## p.failure[1]  0.99600 0.06313 0.0011526      0.0012649
+## p.failure[2]  0.95433 0.20880 0.0038121      0.0037610
+## p.success[1]  0.00400 0.06313 0.0011526      0.0012649
+## p.success[2]  0.04567 0.20880 0.0038121      0.0037610
+## 
+## 2. Quantiles for each variable:
+## 
+##                    2.5%      25%      50%      75%   97.5%
+## deviance      3.9729298  4.58217  5.52638  7.16320 12.4601
+## logit_p[1]   -7.1432399 -4.75444 -3.87993 -3.18076 -2.1263
+## logit_p[2]   -6.6701071 -4.21870 -3.33099 -2.60169 -1.5755
+## p[1]          0.0007896  0.00854  0.02023  0.03990  0.1066
+## p[2]          0.0012667  0.01450  0.03452  0.06903  0.1714
+## p.failure[1]  1.0000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.0000000  1.00000  1.00000  1.00000  1.0000
+## p.success[1]  0.0000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.0000000  0.00000  0.00000  0.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-29.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-30.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.1&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      6.738747 2.16715 0.0395666      0.0401623
+## logit_p[1]   -4.076079 1.28334 0.0234304      0.0238263
+## logit_p[2]   -2.438740 0.83611 0.0152652      0.0157602
+## p[1]          0.029162 0.02916 0.0005325      0.0005485
+## p[2]          0.100128 0.06565 0.0011986      0.0011812
+## p.failure[1]  0.994667 0.07285 0.0013300      0.0013300
+## p.failure[2]  0.798667 0.40106 0.0073224      0.0069345
+## p.success[1]  0.005333 0.07285 0.0013300      0.0013300
+## p.success[2]  0.201333 0.40106 0.0073224      0.0069345
+## 
+## 2. Quantiles for each variable:
+## 
+##                    2.5%       25%      50%      75%   97.5%
+## deviance      4.5499755  5.164549  6.08951  7.65562 12.6037
+## logit_p[1]   -7.0755687 -4.750566 -3.90444 -3.15931 -2.1276
+## logit_p[2]   -4.3370667 -2.933284 -2.36558 -1.83706 -1.0550
+## p[1]          0.0008448  0.008573  0.01975  0.04073  0.1064
+## p[2]          0.0129061  0.050533  0.08584  0.13740  0.2583
+## p.failure[1]  1.0000000  1.000000  1.00000  1.00000  1.0000
+## p.failure[2]  0.0000000  1.000000  1.00000  1.00000  1.0000
+## p.success[1]  0.0000000  0.000000  0.00000  0.00000  0.0000
+## p.success[2]  0.0000000  0.000000  0.00000  0.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-31.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-32.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.15&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      7.025982 2.20358 0.0402317      0.0402060
+## logit_p[1]   -4.060877 1.28950 0.0235430      0.0252799
+## logit_p[2]   -1.872498 0.68045 0.0124232      0.0126447
+## p[1]          0.029303 0.02818 0.0005144      0.0005154
+## p[2]          0.151270 0.07920 0.0014460      0.0014736
+## p.failure[1]  0.995333 0.06816 0.0012445      0.0013405
+## p.failure[2]  0.542667 0.49826 0.0090969      0.0090967
+## p.success[1]  0.004667 0.06816 0.0012445      0.0013405
+## p.success[2]  0.457333 0.49826 0.0090969      0.0090967
+## 
+## 2. Quantiles for each variable:
+## 
+##                    2.5%       25%      50%      75%   97.5%
+## deviance      4.8567188  5.425480  6.33540  7.94006 12.7568
+## logit_p[1]   -7.1424799 -4.735429 -3.84298 -3.13193 -2.1549
+## logit_p[2]   -3.3177268 -2.289447 -1.80894 -1.41536 -0.6547
+## p[1]          0.0007902  0.008702  0.02098  0.04181  0.1039
+## p[2]          0.0349680  0.092001  0.14077  0.19539  0.3419
+## p.failure[1]  1.0000000  1.000000  1.00000  1.00000  1.0000
+## p.failure[2]  0.0000000  0.000000  1.00000  1.00000  1.0000
+## p.success[1]  0.0000000  0.000000  0.00000  0.00000  0.0000
+## p.success[2]  0.0000000  0.000000  0.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-33.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-34.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.2&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      7.182060 2.18424 0.0398786      0.0392058
+## logit_p[1]   -4.012245 1.26388 0.0230753      0.0237579
+## logit_p[2]   -1.468576 0.59340 0.0108340      0.0108341
+## p[1]          0.030058 0.02836 0.0005178      0.0005158
+## p[2]          0.202657 0.08909 0.0016266      0.0016265
+## p.failure[1]  0.996333 0.06045 0.0011037      0.0012121
+## p.failure[2]  0.302333 0.45935 0.0083865      0.0085311
+## p.success[1]  0.003667 0.06045 0.0011037      0.0012121
+## p.success[2]  0.697667 0.45935 0.0083865      0.0085311
+## 
+## 2. Quantiles for each variable:
+## 
+##                    2.5%       25%      50%      75%   97.5%
+## deviance      5.0734475  5.621316  6.48747  7.97297 13.2465
+## logit_p[1]   -7.1430648 -4.707202 -3.78764 -3.11714 -2.1438
+## logit_p[2]   -2.7177544 -1.832902 -1.44429 -1.06163 -0.3828
+## p[1]          0.0007897  0.008949  0.02215  0.04241  0.1049
+## p[2]          0.0619338  0.137893  0.19088  0.25700  0.4055
+## p.failure[1]  1.0000000  1.000000  1.00000  1.00000  1.0000
+## p.failure[2]  0.0000000  0.000000  0.00000  1.00000  1.0000
+## p.success[1]  0.0000000  0.000000  0.00000  0.00000  0.0000
+## p.success[2]  0.0000000  0.000000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-35.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-36.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.25&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.33191 2.15072 0.0392666      0.0397736
+## logit_p[1]   -4.03483 1.24219 0.0226791      0.0226793
+## logit_p[2]   -1.19000 0.54622 0.0099725      0.0097893
+## p[1]          0.02939 0.02849 0.0005201      0.0005201
+## p[2]          0.24646 0.09437 0.0017229      0.0017349
+## p.failure[1]  0.99400 0.07724 0.0014102      0.0014097
+## p.failure[2]  0.15467 0.36165 0.0066027      0.0066019
+## p.success[1]  0.00600 0.07724 0.0014102      0.0014097
+## p.success[2]  0.84533 0.36165 0.0066027      0.0066019
+## 
+## 2. Quantiles for each variable:
+## 
+##                   2.5%      25%      50%      75%   97.5%
+## deviance      5.226619  5.78574  6.68617  8.20330 12.9497
+## logit_p[1]   -6.983741 -4.74030 -3.83564 -3.15101 -2.1248
+## logit_p[2]   -2.355984 -1.53191 -1.17274 -0.80378 -0.1809
+## p[1]          0.000926  0.00866  0.02113  0.04105  0.1067
+## p[2]          0.086591  0.17771  0.23636  0.30922  0.4549
+## p.failure[1]  1.000000  1.00000  1.00000  1.00000  1.0000
+## p.failure[2]  0.000000  0.00000  0.00000  0.00000  1.0000
+## p.success[1]  0.000000  0.00000  0.00000  0.00000  0.0000
+## p.success[2]  0.000000  1.00000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-37.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-38.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.3&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                  Mean      SD  Naive SE Time-series SE
+## deviance      7.46655 2.14561 0.0391733      0.0401403
+## logit_p[1]   -4.08872 1.30792 0.0238793      0.0245747
+## logit_p[2]   -0.91002 0.49757 0.0090844      0.0092425
+## p[1]          0.02908 0.02906 0.0005306      0.0005418
+## p[2]          0.29706 0.09782 0.0017860      0.0018219
+## p.failure[1]  0.99500 0.07055 0.0012880      0.0013580
+## p.failure[2]  0.05733 0.23252 0.0042452      0.0044536
+## p.success[1]  0.00500 0.07055 0.0012880      0.0013580
+## p.success[2]  0.94267 0.23252 0.0042452      0.0044536
+## 
+## 2. Quantiles for each variable:
+## 
+##                    2.5%       25%     50%      75%     97.5%
+## deviance      5.3276832  5.946123  6.7990  8.31318 13.424487
+## logit_p[1]   -7.2374030 -4.758801 -3.8967 -3.16443 -2.105942
+## logit_p[2]   -1.9454129 -1.225911 -0.8896 -0.57765  0.006968
+## p[1]          0.0007187  0.008503  0.0199  0.04053  0.108521
+## p[2]          0.1250545  0.226898  0.2912  0.35947  0.501742
+## p.failure[1]  1.0000000  1.000000  1.0000  1.00000  1.000000
+## p.failure[2]  0.0000000  0.000000  0.0000  0.00000  1.000000
+## p.success[1]  0.0000000  0.000000  0.0000  0.00000  0.000000
+## p.success[2]  0.0000000  1.000000  1.0000  1.00000  1.000000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-39.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-40.png" width="672" /></p>
+<pre><code>## [1] &quot;NeutralPrior and Observed ORR = 0.35&quot;
+## Compiling model graph
+##    Resolving undeclared variables
+##    Allocating nodes
+## Graph information:
+##    Observed stochastic nodes: 2
+##    Unobserved stochastic nodes: 12
+##    Total graph size: 70
+## 
+## Initializing model
+## 
+## 
+## Iterations = 1:4996
+## Thinning interval = 5 
+## Number of chains = 3 
+## Sample size per chain = 1000 
+## 
+## 1. Empirical mean and standard deviation for each variable,
+##    plus standard error of the mean:
+## 
+##                   Mean      SD  Naive SE Time-series SE
+## deviance      7.586111 2.26141 0.0412874      0.0436701
+## logit_p[1]   -4.049622 1.32658 0.0242200      0.0252564
+## logit_p[2]   -0.643145 0.48275 0.0088139      0.0089246
+## p[1]          0.030351 0.03009 0.0005493      0.0005523
+## p[2]          0.352063 0.10445 0.0019070      0.0019381
+## p.failure[1]  0.994333 0.07508 0.0013707      0.0013707
+## p.failure[2]  0.015333 0.12290 0.0022438      0.0022437
+## p.success[1]  0.005667 0.07508 0.0013707      0.0013707
+## p.success[2]  0.984667 0.12290 0.0022438      0.0022437
+## 
+## 2. Quantiles for each variable:
+## 
+##                    2.5%       25%      50%      75%   97.5%
+## deviance      5.3966391  5.977575  6.85678  8.44064 13.7880
+## logit_p[1]   -7.3221417 -4.752733 -3.81512 -3.13022 -2.1265
+## logit_p[2]   -1.6393400 -0.957457 -0.63366 -0.32805  0.2897
+## p[1]          0.0006603  0.008554  0.02156  0.04188  0.1066
+## p[2]          0.1625549  0.277388  0.34668  0.41872  0.5719
+## p.failure[1]  1.0000000  1.000000  1.00000  1.00000  1.0000
+## p.failure[2]  0.0000000  0.000000  0.00000  0.00000  0.0000
+## p.success[1]  0.0000000  0.000000  0.00000  0.00000  0.0000
+## p.success[2]  1.0000000  1.000000  1.00000  1.00000  1.0000</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-41.png" width="672" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-4-42.png" width="672" /></p>
+</div>
+<div id="summary-of-all-outcomes" class="section level3" number="0.2.4">
+<h3><span class="header-section-number">0.2.4</span> Summary of all
+outcomes</h3>
+<p>First plot all priors</p>
+<pre class="r"><code>## Plot each prior distribution in the EX and NEX parts
+prior_logit &lt;- matrix(NA, nrow=Nmix, ncol=nsim)
+
+## Simulate to plot Ex parts and plotting prior separately
+for (j in 1:Nexch) {
+  tau_j &lt;- rhnorm(n = nsim, sigma = 1)
+  mu_j  &lt;- rnorm(n = nsim, mean = mu.mean[j], sd = 1/mu.prec[j])
+  prior_logit[j,] &lt;- sapply(1:nsim, function(x) {
+    rnorm(1, mean=mu_j[x], sd=tau_j%&gt;%sqrt)
+  })
+  tmp_dens &lt;- prior_logit[j,] %&gt;% density
+  tmpcol &lt;- col2rgb(colors[j])/255  
+  par(mar=c(5.1, 4.1, 4.1, 2.1)+3)
+  tmp_dens %&gt;% plot(sub=NA, lwd=2, col=colors[j], 
+                              ylim=c(0,.2), xlim=c(-15,15), frame.plot=F,
+                              xlab=&#39;log-odd (logit) of ORR&#39;, 
+                    main=paste(priors[j],
+                               &#39;Prior Distribution of True Log-Odd ORR (logit)&#39;))
+  tmp_dens %&gt;% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5)) 
+  segments(x0=mu.mean[j],x1=mu.mean[j],y0=0,y1=tmp_dens$y%&gt;%max, col=&#39;black&#39;, 
+           lty=2, lwd=2)  
+  axis(1, seq(-15,15,5),
+       labels=inv.logit(seq(-15,15,5)) %&gt;% round(4), line=5)
+  mtext(&quot;ORR&quot;,1,line=7,at=0)
+} # end of for (j in 1:Nexch)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-5-1.png" width="960" /><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-5-2.png" width="960" /></p>
+<pre class="r"><code>## Now for the NEX part
+prior_logit[Nmix,] &lt;- runif(nsim, -20, 20)
+tmp_dens &lt;- prior_logit[Nmix,] %&gt;% density
+tmpcol &lt;- col2rgb(colors[Nmix])/255
+par(mar=c(5.1, 4.1, 4.1, 2.1)+3)
+tmp_dens %&gt;% plot(sub=NA, lwd=2, col=colors[Nmix], 
+                            ylim=c(0,.2), xlim=c(-15,15), frame.plot=F,
+                            xlab=&#39;log-odd (logit)&#39;, 
+                  main=paste(priors[Nmix],
+                             &#39;Prior Distribution of True Log-Odd ORR (logit)&#39;))
+tmp_dens %&gt;% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+axis(1, seq(-15,15,5),
+     labels=inv.logit(seq(-15,15,5)) %&gt;% round(4), line=5)
+mtext(&quot;ORR&quot;,1,line=7,at=0)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-5-3.png" width="960" /></p>
+<pre class="r"><code>## Overlay all priors
+par(mar=c(5.1, 4.1, 4.1, 2.1)+3)
+for (j in 1:Nexch) {
+  tmp_dens &lt;- prior_logit[j,] %&gt;% density
+  if (j==1) tmp_dens %&gt;% plot(sub=NA, lwd=2, col=colors[j], 
+                              ylim=c(0,.2), xlim=c(-15,15), frame.plot=F,
+                              xlab=&#39;log-odd (logit)&#39;, main=&#39;Prior Distribution of True Log-Odd ORR (logit)&#39;)
+  # if (j&gt;1) tmp_dens %&gt;% lines(lwd=2, col=colors[j])
+  tmpcol &lt;- col2rgb(colors[j])/255
+  tmp_dens %&gt;% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+  
+  segments(x0=mu.mean[j],x1=mu.mean[j],y0=0,y1=tmp_dens$y%&gt;%max, col=&#39;black&#39;, 
+           lty=2, lwd=2)
+} # end of for (j in 1:Nexch)
+
+## Simulate to plot NEX part
+# x &lt;- seq(-15,15, by=.001)
+# x %&gt;% dstp(mu=0, tau=2, nu=1) %&gt;% lines(lwd=2, col=colors[Nmix])
+
+tmpcol &lt;- col2rgb(colors[Nmix])/255
+prior_logit[Nmix,] %&gt;% density %&gt;% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+legend(10,.2, legend=priors, fill=colors)
+axis(1, seq(-15,15,5),
+     labels=inv.logit(seq(-15,15,5)) %&gt;% round(4), line=5)
+mtext(&quot;ORR&quot;,1,line=7,at=0)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-5-4.png" width="960" /></p>
+<pre class="r"><code># tmp2 &lt;- rcauchy(nsim, location = 0, scale = 1) 
+# tmp2 %&gt;% density %&gt;% lines(lwd=2, col=colors[Nmix])
+# tmpcol &lt;- col2rgb(Nmix)/255
+# tmp2 %&gt;% density %&gt;% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))</code></pre>
+<pre class="r"><code>out_tab_p.success &lt;- matrix(NA, ncol=obs.orrs %&gt;% length, nrow=Nmix+1)
+rownames(out_tab_p.success) &lt;- c(priors, &quot;Mix&quot;)
+colnames(out_tab_p.success) &lt;- obs.orrs
+
+
+out_tab_p &lt;- out_tab_logit &lt;- out_tab_p.failure &lt;- out_tab_p.success
+
+for (id1 in 1:(Nmix+1)) {
+  
+  prior &lt;- priors[id1]
+  
+  for (id2 in 1:length(obs.orrs)) {
+    
+    obs.orr &lt;- obs.orrs[id2]
+    
+    if (id1&lt;= Nmix) {
+      out_tab_p.success[id1, id2] &lt;- 
+      binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$mean$p.success[[Nstrata]]
+      
+      out_tab_p.failure[id1, id2] &lt;- 
+      binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]      
+      
+      out_tab_logit[id1, id2] &lt;- paste0(binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,1] %&gt;% round(2), &#39; (&#39;,binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,3] %&gt;% round(2),&#39;, &#39;, binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,7] %&gt;% round(2),&#39;)&#39; ) 
+      
+      out_tab_p[id1, id2] &lt;- paste0(binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %&gt;% round(2), &#39; (&#39;,binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %&gt;% round(2),&#39;, &#39;, binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %&gt;% round(2),&#39;)&#39; )       
+      
+    } else {
+      out_tab_p.success[id1, id2] &lt;- 
+      binary_exnex_jag_dw[[id2]]$BUGSoutput$mean$p.success[[Nstrata]]  
+      
+      out_tab_p.failure[id1, id2] &lt;- 
+      binary_exnex_jag_dw[[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]       
+      
+      out_tab_logit[id1, id2] &lt;- paste0(binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,1] %&gt;% round(2), &#39; (&#39;,binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,3] %&gt;% round(2),&#39;, &#39;, binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,7] %&gt;% round(2),&#39;)&#39; ) 
+      
+      out_tab_p[id1, id2] &lt;- paste0(binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %&gt;% round(2), &#39; (&#39;,binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %&gt;% round(2),&#39;, &#39;, binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %&gt;% round(2),&#39;)&#39; )      
+    } # end of if (id1&lt;= Nmix) else ...
+
+  } # end of for (id2 in 1:length(obs.orrs))
+  
+} # end of for (id1 in 1:(Nmix+1)) 
+
+out_tab_p.success %&gt;% kable(digits=2, caption = paste(&#39;Posterior probability of true ORR $&gt;$&#39;, p.cut))  %&gt;% kable_styling(full_width = F, position = &#39;center&#39;)</code></pre>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Posterior probability of true ORR <span
+class="math inline">\(&gt;\)</span> 0.15
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+0.05
+</th>
+<th style="text-align:right;">
+0.1
+</th>
+<th style="text-align:right;">
+0.15
+</th>
+<th style="text-align:right;">
+0.2
+</th>
+<th style="text-align:right;">
+0.25
+</th>
+<th style="text-align:right;">
+0.3
+</th>
+<th style="text-align:right;">
+0.35
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Pessimistic
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.41
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Optimistic
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+0.87
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neutral
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.46
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0.85
+</td>
+<td style="text-align:right;">
+0.94
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mix
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.39
+</td>
+<td style="text-align:right;">
+0.64
+</td>
+<td style="text-align:right;">
+0.83
+</td>
+<td style="text-align:right;">
+0.92
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>out_tab_p.failure %&gt;% kable(digits=2, caption = paste(&#39;Posterior probability of true ORR $&lt;$&#39;, p.cut))  %&gt;% kable_styling(full_width = F, position = &#39;center&#39;)</code></pre>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Posterior probability of true ORR <span
+class="math inline">\(&lt;\)</span> 0.15
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+0.05
+</th>
+<th style="text-align:right;">
+0.1
+</th>
+<th style="text-align:right;">
+0.15
+</th>
+<th style="text-align:right;">
+0.2
+</th>
+<th style="text-align:right;">
+0.25
+</th>
+<th style="text-align:right;">
+0.3
+</th>
+<th style="text-align:right;">
+0.35
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Pessimistic
+</td>
+<td style="text-align:right;">
+0.98
+</td>
+<td style="text-align:right;">
+0.93
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+0.34
+</td>
+<td style="text-align:right;">
+0.16
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Optimistic
+</td>
+<td style="text-align:right;">
+0.97
+</td>
+<td style="text-align:right;">
+0.88
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+0.50
+</td>
+<td style="text-align:right;">
+0.29
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neutral
+</td>
+<td style="text-align:right;">
+0.95
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0.54
+</td>
+<td style="text-align:right;">
+0.30
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mix
+</td>
+<td style="text-align:right;">
+0.96
+</td>
+<td style="text-align:right;">
+0.84
+</td>
+<td style="text-align:right;">
+0.61
+</td>
+<td style="text-align:right;">
+0.36
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>out_tab_p %&gt;% kable(digits=2, caption=&#39;Posterior mean and 95% credible interval for true ORR&#39;)  %&gt;% kable_styling(full_width = F, position = &#39;center&#39;)</code></pre>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Posterior mean and 95% credible interval for true ORR
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+0.05
+</th>
+<th style="text-align:left;">
+0.1
+</th>
+<th style="text-align:left;">
+0.15
+</th>
+<th style="text-align:left;">
+0.2
+</th>
+<th style="text-align:left;">
+0.25
+</th>
+<th style="text-align:left;">
+0.3
+</th>
+<th style="text-align:left;">
+0.35
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Pessimistic
+</td>
+<td style="text-align:left;">
+0.05 (0, 0.14)
+</td>
+<td style="text-align:left;">
+0.07 (0.01, 0.19)
+</td>
+<td style="text-align:left;">
+0.11 (0.03, 0.26)
+</td>
+<td style="text-align:left;">
+0.15 (0.04, 0.32)
+</td>
+<td style="text-align:left;">
+0.19 (0.06, 0.39)
+</td>
+<td style="text-align:left;">
+0.24 (0.09, 0.45)
+</td>
+<td style="text-align:left;">
+0.29 (0.12, 0.51)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Optimistic
+</td>
+<td style="text-align:left;">
+0.05 (0.01, 0.15)
+</td>
+<td style="text-align:left;">
+0.09 (0.02, 0.21)
+</td>
+<td style="text-align:left;">
+0.12 (0.03, 0.27)
+</td>
+<td style="text-align:left;">
+0.16 (0.05, 0.34)
+</td>
+<td style="text-align:left;">
+0.21 (0.07, 0.41)
+</td>
+<td style="text-align:left;">
+0.26 (0.1, 0.47)
+</td>
+<td style="text-align:left;">
+0.31 (0.13, 0.53)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neutral
+</td>
+<td style="text-align:left;">
+0.05 (0, 0.17)
+</td>
+<td style="text-align:left;">
+0.1 (0.01, 0.26)
+</td>
+<td style="text-align:left;">
+0.15 (0.03, 0.34)
+</td>
+<td style="text-align:left;">
+0.2 (0.06, 0.41)
+</td>
+<td style="text-align:left;">
+0.25 (0.09, 0.45)
+</td>
+<td style="text-align:left;">
+0.3 (0.13, 0.5)
+</td>
+<td style="text-align:left;">
+0.35 (0.16, 0.57)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mix
+</td>
+<td style="text-align:left;">
+0.06 (0, 0.17)
+</td>
+<td style="text-align:left;">
+0.09 (0.02, 0.24)
+</td>
+<td style="text-align:left;">
+0.14 (0.03, 0.33)
+</td>
+<td style="text-align:left;">
+0.19 (0.06, 0.37)
+</td>
+<td style="text-align:left;">
+0.24 (0.08, 0.45)
+</td>
+<td style="text-align:left;">
+0.29 (0.11, 0.49)
+</td>
+<td style="text-align:left;">
+0.33 (0.16, 0.54)
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>out_tab_logit %&gt;% kable(digits=2, caption=&#39;Posterior mean and 95% credible interval for log-odd (logit) of true ORR&#39;)  %&gt;% kable_styling(full_width = F, position = &#39;center&#39;)</code></pre>
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Posterior mean and 95% credible interval for log-odd (logit) of true ORR
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+0.05
+</th>
+<th style="text-align:left;">
+0.1
+</th>
+<th style="text-align:left;">
+0.15
+</th>
+<th style="text-align:left;">
+0.2
+</th>
+<th style="text-align:left;">
+0.25
+</th>
+<th style="text-align:left;">
+0.3
+</th>
+<th style="text-align:left;">
+0.35
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Pessimistic
+</td>
+<td style="text-align:left;">
+-3.35 (-5.34, -1.83)
+</td>
+<td style="text-align:left;">
+-2.8 (-4.35, -1.42)
+</td>
+<td style="text-align:left;">
+-2.3 (-3.66, -1.03)
+</td>
+<td style="text-align:left;">
+-1.89 (-3.12, -0.74)
+</td>
+<td style="text-align:left;">
+-1.52 (-2.76, -0.44)
+</td>
+<td style="text-align:left;">
+-1.21 (-2.37, -0.21)
+</td>
+<td style="text-align:left;">
+-0.95 (-2.01, 0.03)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Optimistic
+</td>
+<td style="text-align:left;">
+-3.08 (-4.57, -1.7)
+</td>
+<td style="text-align:left;">
+-2.55 (-4.11, -1.31)
+</td>
+<td style="text-align:left;">
+-2.15 (-3.48, -0.99)
+</td>
+<td style="text-align:left;">
+-1.74 (-2.93, -0.65)
+</td>
+<td style="text-align:left;">
+-1.43 (-2.54, -0.36)
+</td>
+<td style="text-align:left;">
+-1.13 (-2.22, -0.12)
+</td>
+<td style="text-align:left;">
+-0.85 (-1.92, 0.1)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Neutral
+</td>
+<td style="text-align:left;">
+-3.53 (-6.67, -1.58)
+</td>
+<td style="text-align:left;">
+-2.44 (-4.34, -1.05)
+</td>
+<td style="text-align:left;">
+-1.87 (-3.32, -0.65)
+</td>
+<td style="text-align:left;">
+-1.47 (-2.72, -0.38)
+</td>
+<td style="text-align:left;">
+-1.19 (-2.36, -0.18)
+</td>
+<td style="text-align:left;">
+-0.91 (-1.95, 0.01)
+</td>
+<td style="text-align:left;">
+-0.64 (-1.64, 0.29)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mix
+</td>
+<td style="text-align:left;">
+-3.16 (-5.35, -1.58)
+</td>
+<td style="text-align:left;">
+-2.47 (-4.1, -1.16)
+</td>
+<td style="text-align:left;">
+-1.95 (-3.43, -0.71)
+</td>
+<td style="text-align:left;">
+-1.55 (-2.74, -0.51)
+</td>
+<td style="text-align:left;">
+-1.23 (-2.4, -0.18)
+</td>
+<td style="text-align:left;">
+-0.97 (-2.08, -0.05)
+</td>
+<td style="text-align:left;">
+-0.73 (-1.69, 0.16)
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># to-do: add summary table for Rhat and n_eff</code></pre>
+</div>
+</div>
+<div id="association-between-lor-and-lhr" class="section level2"
+number="0.3">
+<h2><span class="header-section-number">0.3</span> Association between
+LOR and LHR</h2>
+<div id="load-data-1" class="section level3" number="0.3.1">
+<h3><span class="header-section-number">0.3.1</span> Load data</h3>
+<pre class="r"><code>data.raw &lt;- readxl::read_xlsx(path = &#39;PRROC.xlsx&#39;, range = cell_cols(&#39;A:M&#39;))
+data.use &lt;- data.raw %&gt;% dplyr::filter(one_class_mod==&#39;Y&#39;)
+
+data.use %&gt;% kbl() %&gt;% kable_styling()</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+study
+</th>
+<th style="text-align:right;">
+res_a
+</th>
+<th style="text-align:right;">
+n_a
+</th>
+<th style="text-align:right;">
+res_b
+</th>
+<th style="text-align:right;">
+n_b
+</th>
+<th style="text-align:right;">
+hr_pfs_ab
+</th>
+<th style="text-align:right;">
+hr_pfs_low
+</th>
+<th style="text-align:right;">
+hr_pfs_upp
+</th>
+<th style="text-align:right;">
+code_a
+</th>
+<th style="text-align:right;">
+code_b
+</th>
+<th style="text-align:left;">
+one_class_mod
+</th>
+<th style="text-align:left;">
+dynamic_borrow_SAT
+</th>
+<th style="text-align:left;">
+des
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+34
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+36
+</td>
+<td style="text-align:right;">
+0.570
+</td>
+<td style="text-align:right;">
+0.330
+</td>
+<td style="text-align:right;">
+0.980
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+Konstantinopoulos PA, Lancet Oncol. 2020
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+0.550
+</td>
+<td style="text-align:right;">
+0.350
+</td>
+<td style="text-align:right;">
+0.900
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+Lheureux S, Lancet. 2021
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+55
+</td>
+<td style="text-align:right;">
+248
+</td>
+<td style="text-align:right;">
+14
+</td>
+<td style="text-align:right;">
+118
+</td>
+<td style="text-align:right;">
+0.980
+</td>
+<td style="text-align:right;">
+0.730
+</td>
+<td style="text-align:right;">
+1.310
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+N
+</td>
+<td style="text-align:left;">
+ESMO 2019
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+32
+</td>
+<td style="text-align:right;">
+221
+</td>
+<td style="text-align:right;">
+28
+</td>
+<td style="text-align:right;">
+221
+</td>
+<td style="text-align:right;">
+1.057
+</td>
+<td style="text-align:right;">
+0.854
+</td>
+<td style="text-align:right;">
+1.309
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+N
+</td>
+<td style="text-align:left;">
+CORAIL
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+49
+</td>
+<td style="text-align:right;">
+179
+</td>
+<td style="text-align:right;">
+21
+</td>
+<td style="text-align:right;">
+182
+</td>
+<td style="text-align:right;">
+0.420
+</td>
+<td style="text-align:right;">
+0.320
+</td>
+<td style="text-align:right;">
+0.530
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+N
+</td>
+<td style="text-align:left;">
+AURELIA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+13
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+119
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+114
+</td>
+<td style="text-align:right;">
+1.500
+</td>
+<td style="text-align:right;">
+1.200
+</td>
+<td style="text-align:right;">
+1.900
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+Y
+</td>
+<td style="text-align:left;">
+N
+</td>
+<td style="text-align:left;">
+NINJA
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ns &lt;- data.use %&gt;% nrow
+y  &lt;- se &lt;- matrix(NA, ncol=2, nrow=ns)
+
+for (i in 1:ns) {
+  s1 &lt;- data.use$res_a[i]
+  n1 &lt;- data.use$n_a[i]
+  
+  s2 &lt;- data.use$res_b[i]
+  n2 &lt;- data.use$n_b[i]  
+  
+  hr &lt;- data.use$hr_pfs_ab[i]
+  low&lt;- data.use$hr_pfs_low[i]
+  upp&lt;- data.use$hr_pfs_upp[i]
+
+  lor_sd &lt;- lor.sd(s1,n1,s2,n2)
+  lhr_sd &lt;- lhr.sd(hr,low,upp)
+  
+  y[i,1:2]  &lt;- c(lor_sd[1], lhr_sd[1])
+  se[i,1:2] &lt;- c(lor_sd[2], lhr_sd[2])
+} # end of for (i in 1:ns)
+
+## Naive linear plot
+symbols(x=y[,1], y=y[,2], circle = (data.use$n_a+data.use$n_b)/pi, inches=1/3,
+        ann=T, bg=&#39;steelblue2&#39;, fg=NULL, xlab=&#39;LOR&#39;, ylab=&#39;LHR&#39;)
+
+lm(y[,2]~y[,1]) %&gt;% abline(col=&#39;red&#39;, lwd=2)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+</div>
+<div id="winbugs-model-for-one-treatment-class" class="section level3"
+number="0.3.2">
+<h3><span class="header-section-number">0.3.2</span> WinBUGs model for
+one treatment class</h3>
+<p>This is based on formulae (1) and (2) of <a
+href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7065251/"
+class="uri">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7065251/</a></p>
+<pre class="r"><code>### Model definition 
+bvnma_one_class_model &lt;- function() {
+## Data to be specify in the input
+#-------------------------------------------------------------------------------
+# ns    - number of studies
+# y     - ns x 2 matrix, each row shows the treatment effect in the surrogate endpoint (1st element) and main endpoint (2nd element)
+# se    - ns x 2 matrix, each row shows the (study-specific) se of the surrogate (1st element) and main endpoint (2nd element)
+  
+## Parameter to be monitored
+# mu1
+  
+## Parameter to be monitored for surrogacy assessment
+# lambda0     - intercept, ideally being 0
+# lambda1     - slope, ideally &gt;&lt; 0
+# big.psi.sq  - conditional variance, ideally being 0
+#-------------------------------------------------------------------------------
+  
+  # within study precision matrix
+  for(i in 1:ns) {
+    prec_w[i,1:2,1:2] &lt;- inverse(Sigma[i,1:2,1:2])
+    # covariance matrix for the i-th study
+    Sigma[i,1,1] &lt;- pow(se[i,1], 2)
+    Sigma[i,2,2] &lt;- pow(se[i,2], 2)
+    Sigma[i,1,2] &lt;- se[i,1] * se[i,2] * rho_w#[i]
+    Sigma[i,2,1] &lt;- se[i,1] * se[i,2] * rho_w    
+  }
+  
+  # Random effects model
+  for(i in 1:ns) {
+    y[i,1:2] ~ dmnorm(mu[i,1:2], prec_w[i,1:2,1:2])   
+    
+    # product normal formulation for the between study part
+    mu[i,1] &lt;- mu1[i]
+    mu1[i]  ~ dnorm(0, a)
+    # mu[i,1] &lt;- dnorm(0, a)  
+    mu[i,2] ~ dnorm(tmp[i], inv.big.psi.sq)
+    tmp[i]  &lt;- lambda0 + lambda1 * mu1[i]
+    # tmp[i]  &lt;- lambda0 + lambda1 * mu[i,1]
+    
+    #rho_w[i] &lt;- dunif(-1, 1)
+    y_new[i,1:2] ~ dmnorm(mu[i,1:2], prec_w[i,1:2,1:2]) 
+  } # end of for(i in 1:ns)
+  
+  lambda0 ~ dnorm(0, a)
+  lambda1 ~ dnorm(0, a)
+  inv.big.psi.sq &lt;- 1/ big.psi.sq # putting 1/big.psi.sq directly into dnorm(,) not work!
+  big.psi.sq &lt;- abs(tmp2)
+  tmp2 ~ dnorm(0, b)# dnorm(0, b)I(0,) # the latter form does not work!
+  rho_w ~ dunif(-1,1) #-.05 #dunif(-1,1) # giving rho_w prior either not work or not converge
+  a &lt;- 0.001
+  b &lt;- 2
+  
+  # # predict Y2 for given Y1
+  # for(i in 1:nn) { #nn is number of new y1n
+  #   y2n ~ dnorm(mu2n, pre2n)
+  #   m2n &lt;- mu
+  # }
+
+} # end of bvnma_one_class_model
+
+write.model(bvnma_one_class_model, &#39;bvnma_one_class_model.bug&#39;)
+
+### Parameters to monitor
+parameters_one_class_model &lt;- c(&#39;mu1&#39;, &#39;lambda0&#39;, &#39;lambda1&#39;,&#39;big.psi.sq&#39;, 
+                                &#39;rho_w&#39;, &#39;y_new&#39;)
+
+# ns &lt;- 5 # number of studies
+
+### Inits
+inits_one_class_model &lt;- function() {
+
+  list(
+    &quot;mu1&quot;= rnorm(ns, 0, 1),
+    # &quot;mu&quot;= c(rnorm(5, 0, 1), rep(NA, 5)) %&gt;% matrix(nrow=5, byrow = F),
+    &quot;lambda0&quot;= rnorm(1, 0, 1),
+    &quot;lambda1&quot;= rnorm(1, 0, 1),
+    &quot;big.psi.sq&quot;= rnorm(1, 0, 1) %&gt;% abs,
+    # rho_w=runif(5, -1, 1)
+    &quot;rho_w&quot;=runif(1, -1, 1)
+    )  
+} # end of inits_one_class_model
+
+### Data
+# data_one_class_model &lt;- list(
+#   &quot;ns&quot;=ns,
+#   &quot;y&quot;=c(1.46, 2.17, 1.1, 2.22, 0.58, 1.29, 1.41, 2.63, 1.36, 3) %&gt;%  matrix(nrow=ns, byrow = T),
+#   &quot;se&quot;= c(.24, .21, .23, .2, .23, .22, .22, .25, .19, .2) %&gt;%  matrix(nrow=ns, byrow = T)
+# )
+data_one_class_model &lt;- list(ns=ns, y=y, se= se)
+
+### Run MCMC
+set.seed(36)
+bvnma_one_class_bug &lt;- bugs(data = data_one_class_model, inits = 
+                            inits_one_class_model, parameters.to.save = 
+                            parameters_one_class_model, 
+                            model.file = &quot;bvnma_one_class_model.bug&quot;,
+                            n.chains=3, n.iter=20e4,
+                            clearWD=T, bugs.directory=&quot;C:/Users/nguyea37/Documents/WinBUGS14&quot;)
+print(bvnma_one_class_bug)</code></pre>
+<pre><code>## Inference for Bugs model at &quot;bvnma_one_class_model.bug&quot;, fit using WinBUGS,
+##  3 chains, each with 2e+05 iterations (first 1e+05 discarded), n.thin = 300
+##  n.sims = 1002 iterations saved
+##            mean  sd 2.5%  25%  50%  75% 97.5% Rhat n.eff
+## mu1[1]     -0.9 1.2 -3.4 -1.7 -0.8 -0.1   1.3    1   910
+## mu1[2]      1.4 0.7  0.0  1.0  1.4  1.9   2.8    1  1000
+## mu1[3]      0.7 0.3  0.1  0.5  0.7  0.9   1.3    1   280
+## mu1[4]      0.2 0.3 -0.4  0.0  0.2  0.3   0.7    1   690
+## mu1[5]      1.1 0.3  0.5  0.9  1.1  1.3   1.6    1  1000
+## mu1[6]     -0.6 0.4 -1.5 -0.9 -0.6 -0.3   0.3    1  1000
+## lambda0    -0.1 0.3 -0.7 -0.3 -0.1  0.1   0.6    1   790
+## lambda1    -0.3 0.4 -1.2 -0.5 -0.3 -0.1   0.4    1  1000
+## big.psi.sq  0.3 0.3  0.0  0.1  0.3  0.5   1.1    1   270
+## rho_w       0.0 0.6 -0.9 -0.5 -0.1  0.5   0.9    1  1000
+## y_new[1,1] -0.9 1.6 -4.0 -2.0 -0.9  0.1   2.2    1   320
+## y_new[1,2] -0.4 0.7 -1.7 -0.8 -0.3  0.1   0.9    1   300
+## y_new[2,1]  1.4 1.1 -0.6  0.7  1.4  2.2   3.5    1  1000
+## y_new[2,2] -0.6 0.6 -1.8 -1.0 -0.6 -0.2   0.6    1   470
+## y_new[3,1]  0.7 0.4 -0.2  0.4  0.7  1.0   1.6    1   180
+## y_new[3,2] -0.1 0.5 -1.1 -0.5 -0.2  0.2   0.9    1   410
+## y_new[4,1]  0.2 0.4 -0.6 -0.1  0.2  0.4   1.0    1  1000
+## y_new[4,2]  0.0 0.4 -0.8 -0.3  0.0  0.3   0.8    1  1000
+## y_new[5,1]  1.1 0.4  0.2  0.8  1.1  1.4   1.8    1  1000
+## y_new[5,2] -0.7 0.5 -1.6 -1.0 -0.7 -0.3   0.3    1   490
+## y_new[6,1] -0.6 0.6 -1.8 -1.0 -0.6 -0.2   0.6    1   590
+## y_new[6,2]  0.3 0.5 -0.6  0.0  0.3  0.6   1.2    1  1000
+## deviance   10.2 6.1 -4.1  6.7 10.6 14.0  21.4    1  1000
+## 
+## For each parameter, n.eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor (at convergence, Rhat=1).
+## 
+## DIC info (using the rule, pD = Dbar-Dhat)
+## pD = 7.4 and DIC = 17.6
+## DIC is an estimate of expected predictive error (lower deviance is better).</code></pre>
+<pre class="r"><code>plot(bvnma_one_class_bug)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-8-1.png" width="960" /></p>
+<pre class="r"><code># ### Convergence diagnostic plot
+# mcmcplots::mcmcplot(bvnma_one_class_bug)
+
+### Credible interval for selected parameters
+par(mar=c(5.1, 4.1+3, 4.1, 2.1))
+mcmcplots::caterplot(bvnma_one_class_bug, parms = c(&#39;lambda0&#39;, &#39;lambda1&#39;,&#39;big.psi.sq&#39;), labels=c(&#39;lambda_0\n Intercept \n ideally being 0&#39;, &#39;lambda_1\n Slope\n ideally &lt; 0&#39;,
+       &#39;psi^2\n Conditional variance\n ideally being 0&#39;), reorder = F, frame.plot=F, style=&#39;plain&#39;)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-8-2.png" width="960" /></p>
+<pre class="r"><code>### Density plot for selected parameters
+mcmcplots::denplot(bvnma_one_class_bug, parms = c(&#39;lambda0&#39;, &#39;lambda1&#39;,&#39;big.psi.sq&#39;), collapse = T, 
+main=c(&#39;$\\lambda_0$ - Intercept, ideally being 0&#39;, &#39;$\\lambda_1$ - Slope, ideally &gt;&lt; 0&#39;,
+       &#39;$\\psi^2$  - conditional variance, ideally being 0&#39;), style = &#39;plain&#39;, frame.plot=F)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-8-3.png" width="960" /></p>
+<pre class="r"><code># ### Convert Bug obj to MCMC obj so more function can work with
+# bvnma_one_class_mcmc &lt;- bvnma_one_class_bug %&gt;% as.mcmc.bugs
+# 
+# bvnma_one_class_mcmc %&gt;% geweke.plot
+# 
+# bvnma_one_class_mcmc %&gt;% gelman.plot
+# 
+# bvnma_one_class_mcmc %&gt;% autocorr.plot
+# 
+# bvnma_one_class_bug %&gt;% autoplot
+
+## Naive linear plot plus simulation from posterior predictive dist
+library(randomcoloR)</code></pre>
+<pre><code>## Warning: package &#39;randomcoloR&#39; was built under R version 4.2.2</code></pre>
+<pre class="r"><code>cols &lt;- distinctColorPalette(ns)
+# symbols(x=y[,1], y=y[,2], circle = (data.use$n_a+data.use$n_b)/pi, inches=1/3,
+#         ann=T, bg=cols[id], fg=NULL, xlab=&#39;LOR&#39;, ylab=&#39;LHR&#39;, 
+#         ylim=c(-3,3), xlim=c(-3,3))
+
+plot(x=y[,1], y=y[,2], cex=(data.use$n_a+data.use$n_b)/(pi*30),
+       xlab=&#39;Log Odds-Ratio&#39;, ylab=&#39;Log Hazards-Ratio&#39;, ylim=c(-3,3), xlim=c(-3,3), pch=19, col=cols,
+     main=&#39;Observed data (big circles withe size ~ N) and simulated data (tiny dots) \n from posterior predictive distribution for each trial (by color)&#39;, frame.plot = F)
+
+lor_all &lt;- lhr_all &lt;- NULL
+
+for(id in 1:ns) {
+  lor &lt;- bvnma_one_class_bug$sims.list$y_new[,id,1]
+  lhr &lt;- bvnma_one_class_bug$sims.list$y_new[,id,2]
+  points(x=lor, y=lhr, col=cols[id], cex=.33, pch=1)
+  
+  lor_all &lt;- c(lor_all, lor)
+  lhr_all &lt;- c(lhr_all, lhr)
+}
+lm(y[,2]~y[,1]) %&gt;% abline(col=&#39;black&#39;, lwd=1.75, lty=2)
+legend(x=-3,y=3, legend=data.use$des, col = cols, pch=19, bty=&#39;n&#39;)</code></pre>
+<p><img src="1_PRROC_Gating_NMA_Dynamic_Borrowing_files/figure-html/unnamed-chunk-8-4.png" width="960" /></p>
+<pre class="r"><code># lm(lhr~lor) %&gt;% abline(col=&#39;black&#39;, lwd=1.5, lty=2)</code></pre>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
