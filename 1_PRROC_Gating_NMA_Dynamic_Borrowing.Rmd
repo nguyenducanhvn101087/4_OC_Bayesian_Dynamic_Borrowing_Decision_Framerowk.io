@@ -1,0 +1,772 @@
+---
+title: "PRROC Gating - NMA - Dynamic Borrowing" 
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+author: "Anh Nguyen Duc"
+output:
+  html_document:
+    toc: yes
+    toc_float: true
+    to_depth: 5
+    collapsed: false
+    smooth_scroll: false
+    number_sections: true
+    theme: united
+    self_contained: false
+  word_document: default
+header-includes: \usepackage{docmute}
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+remove(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+# Load packages ----------------------------------------------------------------
+require(tidyverse)
+require(knitr)
+require(R2WinBUGS)
+require(pbugs) # parallel winbugs
+require(R2jags)# parallel already supported
+require(coda)  # nice mcmc utilities
+require(mcmcplots) # nice mcmc utilities
+require(readxl)
+require(kableExtra)
+require(extraDistr)
+require(LaplacesDemon) # Student t Distribution: Precision Parameterization
+```
+
+## Utility functions
+```{r echo=TRUE}
+wald.ci <- function(x, n, ci.lev=.95) {
+  p <- x/n
+  se<- sqrt(p*(1-p)/n)
+  z <- qnorm((1+ci.lev)/2) %>% abs
+  p + c(-1,1)*z*se
+}
+#-------------------------------------------------------------------------------
+lor.sd <- function(s1, n1, s2, n2) { 
+# get log OR and SD
+  f1 <- n1 - s1
+  f2 <- n2 - s2
+# x - matrix of two columns of successes (s) and failures (f)
+  x <- rbind(c(s1, f1), 
+             c(s2, f2))
+  D <- factor(c("s","f"), levels=c("f","s"))
+  m <- glm(x~D, family=binomial) %>% summary
+  m$coefficients[2,1:2]
+}
+#-------------------------------------------------------------------------------
+lhr.sd <- function(hr, low, upp) {
+# approx log HR and SD 
+  loghr <- log(hr)
+  sd <- ((log(c(low,upp)) - loghr) / qnorm(.975)) %>% abs %>% sqrt %>% mean
+  return(c("loghr"=loghr, "sd"=sd))
+}
+```
+
+## Posterior probability of ``true'' response $\ge$ a threshold
+
+### Load data
+```{r echo=TRUE}
+data.raw <- readxl::read_xlsx(path = 'PRROC.xlsx', range = cell_cols('A:M'))
+data.use <- data.raw %>% dplyr::filter(dynamic_borrow_SAT=='Y')
+data.use <- data.use[,c(1:3, data.use%>%ncol)]
+data.use <- data.use[-2,,drop=F] # as per clinical team => remove Adavo
+data.use %>% kbl() %>% kable_styling()
+```
+
+### WinBUGs model for binary EXNEX model with dynamic (stochastic) mixture weights
+
+This is based on section 5.3 of https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&file=pst1730-sup-0001-supplementary.pdf 
+
+Original paper is https://onlinelibrary.wiley.com/doi/epdf/10.1002/pst.1730
+
+```{r echo=TRUE}
+### Model definition when mixture weights are stochastic
+binary_exnex_model_dw <- function() {
+## Data to be specify in the input
+#-------------------------------------------------------------------------------
+
+# Nexch        - number of exchangeable components
+# Nmix         - number of mixture weights and must be Nexch+1
+# Nstrata      - number of strata e.g. studies or cohort (in platform trial)
+# pMix         - matrix of Nmix * Nstrata mixture weights (each col summing up to 1)
+# n            - vector of Nstrata elements storing patient numbers for each stratum
+# r            - vector of Nstrata elements storing response numbers for each stratum
+
+# mu.mean      - vector of Nexch prior mean(s)
+# mu.prec      - vector of Nexch prior precision(s)
+# tau.HN.scale - scale parameter of Half-Normal prior for tau
+# ------- no longer needed -----------------------------------------------------
+# nex.mean     - prior mean for non-exchangeable component
+# nex.prec     - prior precision for non-exchangeable component
+# ------- end of no longer needed ----------------------------------------------
+# p.cut        - clinically relevant threshold for response rate to compare against
+  
+## Parameter(s) to be monitored
+# p            - posterior response rate
+# logit_p      - logit(p) i.e. log odd
+# p.success    - posterior indicator if p > p.cut
+# p.failure    - posterior indicator if p < p.cut
+# pMix         - posterior mixture weight to test for "exchangeability"
+
+#-------------------------------------------------------------------------------
+  
+  # prior distributions for EX-parameters
+  for (jj in 1:Nexch) {
+    mu[jj] ~dnorm(mu.mean[jj],mu.prec[jj])
+    prior.tau.prec[jj] <- pow(tau.HN.scale[jj],-2)
+    tau[jj] ~ dnorm(0,prior.tau.prec[jj]);I(0.001,)
+    prec.tau[jj] <- pow(tau[jj],-2)
+  }
+  
+  # log-odds parameters under EX
+  for (jj in 1:Nexch) {
+    for (j in 1:Nstrata) {
+      re[jj,j] ~ dnorm(0,prec.tau[jj])
+      LogOdds[jj,j] <- mu[jj]+re[jj,j]
+    }
+  }
+  
+  # log-odds parameters under NEX
+  for (j in 1:Nstrata) {
+    #p_Nmix[j] ~ dbeta(2,2) # slight mod to have flat prior
+    #LogOdds[Nmix,j] ~ dnorm(nex.mean,nex.prec)#<- logit(p_Nmix[j])#
+
+    # LogOdds[Nmix,j] ~ dt(0, 2, 1) #Student's t-distribution becomes the Cauchy distribution when the degrees of freedom is equal to one
+    LogOdds[Nmix,j] ~ dunif(-20, 20)
+    
+  }
+  
+  # latent mixture indicators:
+  # exch.index: categorial 1,...,Nmix=Nexch+1
+  # exch: Nstrata x Nmix matrix of 0/1 elements
+  for (j in 1:Nstrata) {
+    exch.index[j] ~ dcat(pMix[1:Nmix,j])
+    for (jj in 1:Nmix) {
+      exch[j,jj] <- equals(exch.index[j],jj)
+    }
+  }
+  
+  # pick theta
+  for (j in 1:Nstrata) {
+    theta[j] <- LogOdds[exch.index[j],j]
+  }
+  
+  # likelihood part
+  for (i in 1:Nstrata) {
+    logit( p[i] ) <- theta[i]
+    p.success[i]  <- step(p[i]-p.cut)
+    p.failure[i]  <- step(p.cut-p[i])
+    r[i] ~ dbin(p[i],n[i])
+    logit_p[i] <- theta[i]
+  }
+  
+  # normalized mixture weights
+  for (i in 1:Nstrata) {
+    for (j in 1:Nmix) {
+      pMix0[j,i] ~ dbeta(2, 2)
+    }
+  
+    for (j in 1:Nmix) {
+      pMix[j,i] <- pMix0[j,i] / sum(pMix0[,i])
+    }    
+  }
+
+  
+} # end of binary_exnex_model_dw
+
+write.model(binary_exnex_model_dw, 'binary_exnex_model_dw.bug')
+
+### Parameters to monitor
+parameters_binary_exnex_model_dw <- c('p', 'logit_p', 'pMix', 'p.success', 'p.failure')
+
+### Data
+
+## EX part
+mu.mean <- c(logit(.05), logit(.3)) # ex prior for hyper meanis centered at logit(0.05)
+# ex precision  for hyperpar mean based on (23) of https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&file=pst1730-sup-0001-supplementary.pdf
+mu.prec <- 1/sqrt( ( 1/inv.logit(mu.mean) + 1/(1-inv.logit(mu.mean)) )) # still missing s^2 but this would only make the prior more non-informative
+
+Nexch   <- mu.mean %>% length
+
+tau.HN.scale <- rep(1, Nexch)
+
+# ## NEX part - no longer needed
+# nex.mean<-logit(.15) # prior mean for nex part
+# 
+# # prior precision for nex part based on (20) of https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&file=pst1730-sup-0001-supplementary.pdf
+# nex.prec <- 1/sqrt( 1/inv.logit(nex.mean) + 1/(1-inv.logit(nex.mean))  * 1e5 ) 
+
+p.cut<-.15
+
+Nmix    <- Nexch + 1
+
+obs.orrs <- c(.05, .1, .15, .2, .25, .3, .35) # would-be observed ORR from expansion cohort
+npt      <- 25 # number of patients from expansion cohort
+
+data_binary_exnex_model_dw <- binary_exnex_jag_dw <- binary_exnex_mcmc_dw <- list()
+
+
+## Run JAGs
+for (id in 1:length(obs.orrs)) {
+  
+  print(paste0('Observed ORR = ', obs.orrs[id]))
+  
+  orr <- obs.orrs[id]
+  n   <- c(data.use$n_a, npt)
+  r   <- c(data.use$res_a, orr*npt) %>% round
+  
+  Nstrata <- n %>% length
+  
+  data_binary_exnex_model_dw[[id]]<- list(Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata,
+                                          n=n, r=r,
+                                          mu.mean=mu.mean, mu.prec=mu.prec,
+                                          tau.HN.scale=tau.HN.scale,
+                                          # nex.mean=nex.mean, nex.prec=nex.prec, 
+                                          p.cut=p.cut
+                                          )
+  ### Inits
+  inits_binary_exnex_model_dw <- function() {
+    pMix0 <- rbeta(Nmix*Nstrata, 2, 2) %>% matrix(nrow=Nstrata) %>% t
+    for (nc in 1:ncol(pMix0)) {
+      pMix0[,nc] <- pMix0[,nc] / sum(pMix0[,nc])
+    }
+    
+    list(
+      "mu"=rnorm(Nexch),
+      "tau"=rnorm(Nexch) %>% abs,
+      "pMix0"=pMix0
+      )  
+  } # end of inits_binary_exnex_model_dw  
+  
+  # JAGS
+  set.seed(36)
+  binary_exnex_jag_dw[[id]] <- jags(data = data_binary_exnex_model_dw[[id]], 
+                                  inits = inits_binary_exnex_model_dw, 
+                                  parameters.to.save = parameters_binary_exnex_model_dw,
+                                  model.file = "binary_exnex_model_dw.bug",
+                                  n.chains=3, n.iter=1e4, n.burnin=5e3)
+  # print(binary_exnex_jag_dw)
+  
+  binary_exnex_mcmc_dw[[id]] <- binary_exnex_jag_dw[[id]] %>% as.mcmc.rjags
+  binary_exnex_mcmc_dw[[id]] %>% summary %>% print
+  
+  ### Credible interval for selected parameters
+  mcmcplots::caterplot(binary_exnex_jag_dw[[id]], parms = c('p'))  
+  
+  ### Density plot for posterior logit alone
+  par(ask=F)
+  mcmcplots::denplot(binary_exnex_jag_dw[[id]], parms = c(paste0('logit_p[', Nstrata, ']')), collapse = T, lwd=2,xlim=c(-15,15), style ='plain', main='Posterior distribution of true ORR', frame.plot=F)
+  
+} # end of for (id in 1:length(obs.orrs))
+
+
+
+### Run MCMC
+```
+
+### WinBUGs model for binary EXNEX model with fixed mixture weights
+
+This is based on section 5.3 of https://onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1002%2Fpst.1730&file=pst1730-sup-0001-supplementary.pdf 
+
+Original paper is https://onlinelibrary.wiley.com/doi/epdf/10.1002/pst.1730
+
+```{r echo=TRUE}
+### Model definition when mixture weights are stochastic
+binary_exnex_model_fw <- function() {
+## Data to be specify in the input
+#-------------------------------------------------------------------------------
+
+# Nexch        - number of exchangeable components
+# Nmix         - number of mixture weights and must be Nexch+1
+# Nstrata      - number of strata e.g. studies or cohort (in platform trial)
+# n            - vector of Nstrata elements storing patient numbers for each stratum
+# r            - vector of Nstrata elements storing response numbers for each stratum
+
+# mu.mean      - vector of Nexch prior mean(s)
+# mu.prec      - vector of Nexch prior precision(s)
+# tau.HN.scale - scale parameter of Half-Normal prior for tau
+# ------- no longer needed -----------------------------------------------------
+# nex.mean     - prior mean for non-exchangeable component
+# nex.prec     - prior precision for non-exchangeable component
+# ------- end of no longer needed ----------------------------------------------
+# p.cut        - clinically relevant threshold for response rate to compare against
+  
+## Parameter(s) to be monitored
+# p            - posterior response rate
+# logit_p      - logit(p) i.e. log odd
+# p.success    - posterior indicator if p > p.cut
+# p.failure    - posterior indicator if p < p.cut
+# pMix         - posterior mixture weight to test for "exchangeability"
+
+#-------------------------------------------------------------------------------
+  
+  # prior distributions for EX-parameters
+  for (jj in 1:Nexch) {
+    mu[jj] ~dnorm(mu.mean[jj],mu.prec[jj])
+    prior.tau.prec[jj] <- pow(tau.HN.scale[jj],-2)
+    tau[jj] ~ dnorm(0,prior.tau.prec[jj]);I(0.001,)
+    prec.tau[jj] <- pow(tau[jj],-2)
+  }
+  
+  # log-odds parameters under EX
+  for (jj in 1:Nexch) {
+    for (j in 1:Nstrata) {
+      re[jj,j] ~ dnorm(0,prec.tau[jj])
+      LogOdds[jj,j] <- mu[jj]+re[jj,j]
+    }
+  }
+  
+  # log-odds parameters under NEX
+  for (j in 1:Nstrata) {
+    #p_Nmix[j] ~ dbeta(2,2) # slight mod to have flat prior
+    #LogOdds[Nmix,j] ~ dnorm(nex.mean,nex.prec)#<- logit(p_Nmix[j])#
+
+    # LogOdds[Nmix,j] ~ dt(0, 2, 1) #Student's t-distribution becomes the Cauchy distribution when the degrees of freedom is equal to one
+    LogOdds[Nmix,j] ~ dunif(-20, 20)
+    
+  }
+  
+  # latent mixture indicators:
+  # exch.index: categorial 1,...,Nmix=Nexch+1
+  # exch: Nstrata x Nmix matrix of 0/1 elements
+  for (j in 1:Nstrata) {
+    exch.index[j] ~ dcat(pMix[1:Nmix,j])
+    for (jj in 1:Nmix) {
+      exch[j,jj] <- equals(exch.index[j],jj)
+    }
+  }
+  
+  # pick theta
+  for (j in 1:Nstrata) {
+    theta[j] <- LogOdds[exch.index[j],j]
+  }
+  
+  # likelihood part
+  for (i in 1:Nstrata) {
+    logit( p[i] ) <- theta[i]
+    p.success[i]  <- step(p[i]-p.cut)
+    p.failure[i]  <- step(p.cut-p[i])
+    r[i] ~ dbin(p[i],n[i])
+    logit_p[i] <- theta[i]
+  }
+
+  
+} # end of binary_exnex_model_fw
+
+write.model(binary_exnex_model_fw, 'binary_exnex_model_fw.bug')
+
+### Parameters to monitor
+parameters_binary_exnex_model_fw <- c('p', 'logit_p', 'p.success', 'p.failure')
+
+### Data similar to above with only difference in pMix
+
+# data_binary_exnex_model_fw_pes <- binary_exnex_jag_fw_pes <- binary_exnex_mcmc_fw_pes <-
+# data_binary_exnex_model_fw_opt <- binary_exnex_jag_fw_opt <- binary_exnex_mcmc_fw_opt <-
+# data_binary_exnex_model_fw_neu <- binary_exnex_jag_fw_neu <- binary_exnex_mcmc_fw_neu <-list()
+data_binary_exnex_model_fw <- binary_exnex_jag_fw <- binary_exnex_mcmc_fw <- list()
+
+priors <- c('Pessimistic', 'Optimistic', 'Neutral')
+colors <- c('gray', 'green', 'blue')
+nsim <- 2e4
+
+## Run JAGs
+for (prior in priors) {
+  data_binary_exnex_model_fw[[prior]] <- binary_exnex_jag_fw[[prior]] <-
+  binary_exnex_mcmc_fw[[prior]]       <- list()
+  
+  pMix <- 
+  case_when(
+    prior=='Pessimistic' ~ c(1,0,0),
+    prior=='Optimistic'  ~ c(0,1,0),
+    prior=='Neutral'     ~ c(0,0,1)
+  )
+  
+  pMix <- pMix %>% rep(Nmix) %>% matrix(nrow=Nmix, byrow = F)
+  
+  for (id in 1:length(obs.orrs)) {
+    print(paste0(prior, 'Prior and Observed ORR = ', obs.orrs[id]))
+    
+    orr <- obs.orrs[id]
+    n   <- c(data.use$n_a, npt)
+    r   <- c(data.use$res_a, orr*npt) %>% round
+    
+    Nstrata <- n %>% length
+    
+    data_binary_exnex_model_fw[[prior]][[id]] <- list(
+      pMix=pMix, Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata, n=n, r=r, 
+      mu.mean=mu.mean, mu.prec=mu.prec, tau.HN.scale=tau.HN.scale,
+      # nex.mean=nex.mean, nex.prec=nex.prec, 
+      p.cut=p.cut
+      )
+    
+    ### Inits
+    inits_binary_exnex_model_fw <- function() {
+
+      list(
+        "mu"=rnorm(Nexch),
+        "tau"=rnorm(Nexch) %>% abs
+        )  
+    } # end of inits_binary_exnex_model_fw  
+    
+    #### JAGS
+    set.seed(36)
+    binary_exnex_jag_fw[[prior]][[id]] <- jags(
+      data = data_binary_exnex_model_fw[[prior]][[id]], 
+      inits = inits_binary_exnex_model_fw, 
+      parameters.to.save = parameters_binary_exnex_model_fw,
+      model.file = "binary_exnex_model_fw.bug",
+      n.chains=3, n.iter=1e4, n.burnin=5e3)
+    # print(binary_exnex_jag_fw[[prior]])
+    
+    binary_exnex_mcmc_fw[[prior]][[id]] <- binary_exnex_jag_fw[[prior]][[id]] %>% as.mcmc.rjags
+    binary_exnex_mcmc_fw[[prior]][[id]] %>% summary %>% print
+    
+    ### Credible interval for selected parameters
+    mcmcplots::caterplot(binary_exnex_jag_fw[[prior]][[id]], parms = c('p'))  
+    
+    ### Density plot for posterior logit alone
+    par(ask=F)
+    mcmcplots::denplot(binary_exnex_jag_fw[[prior]][[id]], parms = c(paste0('logit_p[', Nstrata, ']')), collapse = T, lwd=2,xlim=c(-15,15), style ='plain', main='Posterior distribution of true ORR', frame.plot=F)
+    # axis(1, seq(-15,15,5),
+    #      labels=inv.logit(seq(-15,15,5)) %>% round(4), line=7)
+    # mtext("ORR",1,line=9,at=0)    
+    
+  } # end of for (id in 1:length(obs.orrs))  
+} # end of for (prior in priors)
+
+
+```
+
+### Summary of all outcomes
+
+First plot all priors
+
+```{r echo=TRUE, fig.height=8, fig.width=10} 
+## Plot each prior distribution in the EX and NEX parts
+prior_logit <- matrix(NA, nrow=Nmix, ncol=nsim)
+
+## Simulate to plot Ex parts and plotting prior separately
+for (j in 1:Nexch) {
+  tau_j <- rhnorm(n = nsim, sigma = 1)
+  mu_j  <- rnorm(n = nsim, mean = mu.mean[j], sd = 1/mu.prec[j])
+  prior_logit[j,] <- sapply(1:nsim, function(x) {
+    rnorm(1, mean=mu_j[x], sd=tau_j%>%sqrt)
+  })
+  tmp_dens <- prior_logit[j,] %>% density
+  tmpcol <- col2rgb(colors[j])/255  
+  par(mar=c(5.1, 4.1, 4.1, 2.1)+3)
+  tmp_dens %>% plot(sub=NA, lwd=2, col=colors[j], 
+                              ylim=c(0,.2), xlim=c(-15,15), frame.plot=F,
+                              xlab='log-odd (logit) of ORR', 
+                    main=paste(priors[j],
+                               'Prior Distribution of True Log-Odd ORR (logit)'))
+  tmp_dens %>% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5)) 
+  segments(x0=mu.mean[j],x1=mu.mean[j],y0=0,y1=tmp_dens$y%>%max, col='black', 
+           lty=2, lwd=2)  
+  axis(1, seq(-15,15,5),
+       labels=inv.logit(seq(-15,15,5)) %>% round(4), line=5)
+  mtext("ORR",1,line=7,at=0)
+} # end of for (j in 1:Nexch)
+
+## Now for the NEX part
+prior_logit[Nmix,] <- runif(nsim, -20, 20)
+tmp_dens <- prior_logit[Nmix,] %>% density
+tmpcol <- col2rgb(colors[Nmix])/255
+par(mar=c(5.1, 4.1, 4.1, 2.1)+3)
+tmp_dens %>% plot(sub=NA, lwd=2, col=colors[Nmix], 
+                            ylim=c(0,.2), xlim=c(-15,15), frame.plot=F,
+                            xlab='log-odd (logit)', 
+                  main=paste(priors[Nmix],
+                             'Prior Distribution of True Log-Odd ORR (logit)'))
+tmp_dens %>% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+axis(1, seq(-15,15,5),
+     labels=inv.logit(seq(-15,15,5)) %>% round(4), line=5)
+mtext("ORR",1,line=7,at=0)
+
+## Overlay all priors
+par(mar=c(5.1, 4.1, 4.1, 2.1)+3)
+for (j in 1:Nexch) {
+  tmp_dens <- prior_logit[j,] %>% density
+  if (j==1) tmp_dens %>% plot(sub=NA, lwd=2, col=colors[j], 
+                              ylim=c(0,.2), xlim=c(-15,15), frame.plot=F,
+                              xlab='log-odd (logit)', main='Prior Distribution of True Log-Odd ORR (logit)')
+  # if (j>1) tmp_dens %>% lines(lwd=2, col=colors[j])
+  tmpcol <- col2rgb(colors[j])/255
+  tmp_dens %>% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+  
+  segments(x0=mu.mean[j],x1=mu.mean[j],y0=0,y1=tmp_dens$y%>%max, col='black', 
+           lty=2, lwd=2)
+} # end of for (j in 1:Nexch)
+
+## Simulate to plot NEX part
+# x <- seq(-15,15, by=.001)
+# x %>% dstp(mu=0, tau=2, nu=1) %>% lines(lwd=2, col=colors[Nmix])
+
+tmpcol <- col2rgb(colors[Nmix])/255
+prior_logit[Nmix,] %>% density %>% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+legend(10,.2, legend=priors, fill=colors)
+axis(1, seq(-15,15,5),
+     labels=inv.logit(seq(-15,15,5)) %>% round(4), line=5)
+mtext("ORR",1,line=7,at=0)
+
+# tmp2 <- rcauchy(nsim, location = 0, scale = 1) 
+# tmp2 %>% density %>% lines(lwd=2, col=colors[Nmix])
+# tmpcol <- col2rgb(Nmix)/255
+# tmp2 %>% density %>% polygon(col=rgb(tmpcol[1],tmpcol[2],tmpcol[3],alpha=.5))
+```
+
+
+
+```{r echo=TRUE}
+out_tab_p.success <- matrix(NA, ncol=obs.orrs %>% length, nrow=Nmix+1)
+rownames(out_tab_p.success) <- c(priors, "Mix")
+colnames(out_tab_p.success) <- obs.orrs
+
+
+out_tab_p <- out_tab_logit <- out_tab_p.failure <- out_tab_p.success
+
+for (id1 in 1:(Nmix+1)) {
+  
+  prior <- priors[id1]
+  
+  for (id2 in 1:length(obs.orrs)) {
+    
+    obs.orr <- obs.orrs[id2]
+    
+    if (id1<= Nmix) {
+      out_tab_p.success[id1, id2] <- 
+      binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$mean$p.success[[Nstrata]]
+      
+      out_tab_p.failure[id1, id2] <- 
+      binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]      
+      
+      out_tab_logit[id1, id2] <- paste0(binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,1] %>% round(2), ' (',binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,3] %>% round(2),', ', binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,7] %>% round(2),')' ) 
+      
+      out_tab_p[id1, id2] <- paste0(binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %>% round(2), ' (',binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %>% round(2),', ', binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %>% round(2),')' )       
+      
+    } else {
+      out_tab_p.success[id1, id2] <- 
+      binary_exnex_jag_dw[[id2]]$BUGSoutput$mean$p.success[[Nstrata]]  
+      
+      out_tab_p.failure[id1, id2] <- 
+      binary_exnex_jag_dw[[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]       
+      
+      out_tab_logit[id1, id2] <- paste0(binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,1] %>% round(2), ' (',binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,3] %>% round(2),', ', binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,7] %>% round(2),')' ) 
+      
+      out_tab_p[id1, id2] <- paste0(binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %>% round(2), ' (',binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %>% round(2),', ', binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %>% round(2),')' )      
+    } # end of if (id1<= Nmix) else ...
+
+  } # end of for (id2 in 1:length(obs.orrs))
+  
+} # end of for (id1 in 1:(Nmix+1)) 
+
+out_tab_p.success %>% kable(digits=2, caption = paste('Posterior probability of true ORR $>$', p.cut))  %>% kable_styling(full_width = F, position = 'center')
+
+out_tab_p.failure %>% kable(digits=2, caption = paste('Posterior probability of true ORR $<$', p.cut))  %>% kable_styling(full_width = F, position = 'center')
+
+out_tab_p %>% kable(digits=2, caption='Posterior mean and 95% credible interval for true ORR')  %>% kable_styling(full_width = F, position = 'center')
+
+out_tab_logit %>% kable(digits=2, caption='Posterior mean and 95% credible interval for log-odd (logit) of true ORR')  %>% kable_styling(full_width = F, position = 'center')
+
+# to-do: add summary table for Rhat and n_eff
+```
+
+
+## Association between LOR and LHR 
+
+### Load data
+```{r echo=TRUE}
+data.raw <- readxl::read_xlsx(path = 'PRROC.xlsx', range = cell_cols('A:M'))
+data.use <- data.raw %>% dplyr::filter(one_class_mod=='Y')
+
+data.use %>% kbl() %>% kable_styling()
+
+ns <- data.use %>% nrow
+y  <- se <- matrix(NA, ncol=2, nrow=ns)
+
+for (i in 1:ns) {
+  s1 <- data.use$res_a[i]
+  n1 <- data.use$n_a[i]
+  
+  s2 <- data.use$res_b[i]
+  n2 <- data.use$n_b[i]  
+  
+  hr <- data.use$hr_pfs_ab[i]
+  low<- data.use$hr_pfs_low[i]
+  upp<- data.use$hr_pfs_upp[i]
+
+  lor_sd <- lor.sd(s1,n1,s2,n2)
+  lhr_sd <- lhr.sd(hr,low,upp)
+  
+  y[i,1:2]  <- c(lor_sd[1], lhr_sd[1])
+  se[i,1:2] <- c(lor_sd[2], lhr_sd[2])
+} # end of for (i in 1:ns)
+
+## Naive linear plot
+symbols(x=y[,1], y=y[,2], circle = (data.use$n_a+data.use$n_b)/pi, inches=1/3,
+        ann=T, bg='steelblue2', fg=NULL, xlab='LOR', ylab='LHR')
+
+lm(y[,2]~y[,1]) %>% abline(col='red', lwd=2)
+```
+
+### WinBUGs model for one treatment class
+
+This is based on formulae (1) and (2) of https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7065251/
+
+```{r echo=TRUE, fig.width=10, fig.height=10}
+
+### Model definition 
+bvnma_one_class_model <- function() {
+## Data to be specify in the input
+#-------------------------------------------------------------------------------
+# ns    - number of studies
+# y     - ns x 2 matrix, each row shows the treatment effect in the surrogate endpoint (1st element) and main endpoint (2nd element)
+# se    - ns x 2 matrix, each row shows the (study-specific) se of the surrogate (1st element) and main endpoint (2nd element)
+  
+## Parameter to be monitored
+# mu1
+  
+## Parameter to be monitored for surrogacy assessment
+# lambda0     - intercept, ideally being 0
+# lambda1     - slope, ideally >< 0
+# big.psi.sq  - conditional variance, ideally being 0
+#-------------------------------------------------------------------------------
+  
+  # within study precision matrix
+  for(i in 1:ns) {
+    prec_w[i,1:2,1:2] <- inverse(Sigma[i,1:2,1:2])
+    # covariance matrix for the i-th study
+    Sigma[i,1,1] <- pow(se[i,1], 2)
+    Sigma[i,2,2] <- pow(se[i,2], 2)
+    Sigma[i,1,2] <- se[i,1] * se[i,2] * rho_w#[i]
+    Sigma[i,2,1] <- se[i,1] * se[i,2] * rho_w    
+  }
+  
+  # Random effects model
+  for(i in 1:ns) {
+    y[i,1:2] ~ dmnorm(mu[i,1:2], prec_w[i,1:2,1:2])   
+    
+    # product normal formulation for the between study part
+    mu[i,1] <- mu1[i]
+    mu1[i]  ~ dnorm(0, a)
+    # mu[i,1] <- dnorm(0, a)  
+    mu[i,2] ~ dnorm(tmp[i], inv.big.psi.sq)
+    tmp[i]  <- lambda0 + lambda1 * mu1[i]
+    # tmp[i]  <- lambda0 + lambda1 * mu[i,1]
+    
+    #rho_w[i] <- dunif(-1, 1)
+    y_new[i,1:2] ~ dmnorm(mu[i,1:2], prec_w[i,1:2,1:2]) 
+  } # end of for(i in 1:ns)
+  
+  lambda0 ~ dnorm(0, a)
+  lambda1 ~ dnorm(0, a)
+  inv.big.psi.sq <- 1/ big.psi.sq # putting 1/big.psi.sq directly into dnorm(,) not work!
+  big.psi.sq <- abs(tmp2)
+  tmp2 ~ dnorm(0, b)# dnorm(0, b)I(0,) # the latter form does not work!
+  rho_w ~ dunif(-1,1) #-.05 #dunif(-1,1) # giving rho_w prior either not work or not converge
+  a <- 0.001
+  b <- 2
+  
+  # # predict Y2 for given Y1
+  # for(i in 1:nn) { #nn is number of new y1n
+  #   y2n ~ dnorm(mu2n, pre2n)
+  #   m2n <- mu
+  # }
+
+} # end of bvnma_one_class_model
+
+write.model(bvnma_one_class_model, 'bvnma_one_class_model.bug')
+
+### Parameters to monitor
+parameters_one_class_model <- c('mu1', 'lambda0', 'lambda1','big.psi.sq', 
+                                'rho_w', 'y_new')
+
+# ns <- 5 # number of studies
+
+### Inits
+inits_one_class_model <- function() {
+
+  list(
+    "mu1"= rnorm(ns, 0, 1),
+    # "mu"= c(rnorm(5, 0, 1), rep(NA, 5)) %>% matrix(nrow=5, byrow = F),
+    "lambda0"= rnorm(1, 0, 1),
+    "lambda1"= rnorm(1, 0, 1),
+    "big.psi.sq"= rnorm(1, 0, 1) %>% abs,
+    # rho_w=runif(5, -1, 1)
+    "rho_w"=runif(1, -1, 1)
+    )  
+} # end of inits_one_class_model
+
+### Data
+# data_one_class_model <- list(
+#   "ns"=ns,
+#   "y"=c(1.46, 2.17, 1.1, 2.22, 0.58, 1.29, 1.41, 2.63, 1.36, 3) %>%  matrix(nrow=ns, byrow = T),
+#   "se"= c(.24, .21, .23, .2, .23, .22, .22, .25, .19, .2) %>%  matrix(nrow=ns, byrow = T)
+# )
+data_one_class_model <- list(ns=ns, y=y, se= se)
+
+### Run MCMC
+set.seed(36)
+bvnma_one_class_bug <- bugs(data = data_one_class_model, inits = 
+                            inits_one_class_model, parameters.to.save = 
+                            parameters_one_class_model, 
+                            model.file = "bvnma_one_class_model.bug",
+                            n.chains=3, n.iter=20e4,
+                            clearWD=T, bugs.directory="C:/Users/nguyea37/Documents/WinBUGS14")
+print(bvnma_one_class_bug)
+plot(bvnma_one_class_bug)
+
+# ### Convergence diagnostic plot
+# mcmcplots::mcmcplot(bvnma_one_class_bug)
+
+### Credible interval for selected parameters
+par(mar=c(5.1, 4.1+3, 4.1, 2.1))
+mcmcplots::caterplot(bvnma_one_class_bug, parms = c('lambda0', 'lambda1','big.psi.sq'), labels=c('lambda_0\n Intercept \n ideally being 0', 'lambda_1\n Slope\n ideally < 0',
+       'psi^2\n Conditional variance\n ideally being 0'), reorder = F, frame.plot=F, style='plain')
+
+### Density plot for selected parameters
+mcmcplots::denplot(bvnma_one_class_bug, parms = c('lambda0', 'lambda1','big.psi.sq'), collapse = T, 
+main=c('$\\lambda_0$ - Intercept, ideally being 0', '$\\lambda_1$ - Slope, ideally >< 0',
+       '$\\psi^2$  - conditional variance, ideally being 0'), style = 'plain', frame.plot=F)
+
+
+# ### Convert Bug obj to MCMC obj so more function can work with
+# bvnma_one_class_mcmc <- bvnma_one_class_bug %>% as.mcmc.bugs
+# 
+# bvnma_one_class_mcmc %>% geweke.plot
+# 
+# bvnma_one_class_mcmc %>% gelman.plot
+# 
+# bvnma_one_class_mcmc %>% autocorr.plot
+# 
+# bvnma_one_class_bug %>% autoplot
+
+## Naive linear plot plus simulation from posterior predictive dist
+library(randomcoloR)
+cols <- distinctColorPalette(ns)
+# symbols(x=y[,1], y=y[,2], circle = (data.use$n_a+data.use$n_b)/pi, inches=1/3,
+#         ann=T, bg=cols[id], fg=NULL, xlab='LOR', ylab='LHR', 
+#         ylim=c(-3,3), xlim=c(-3,3))
+
+plot(x=y[,1], y=y[,2], cex=(data.use$n_a+data.use$n_b)/(pi*30),
+       xlab='Log Odds-Ratio', ylab='Log Hazards-Ratio', ylim=c(-3,3), xlim=c(-3,3), pch=19, col=cols,
+     main='Observed data (big circles withe size ~ N) and simulated data (tiny dots) \n from posterior predictive distribution for each trial (by color)', frame.plot = F)
+
+lor_all <- lhr_all <- NULL
+
+for(id in 1:ns) {
+  lor <- bvnma_one_class_bug$sims.list$y_new[,id,1]
+  lhr <- bvnma_one_class_bug$sims.list$y_new[,id,2]
+  points(x=lor, y=lhr, col=cols[id], cex=.33, pch=1)
+  
+  lor_all <- c(lor_all, lor)
+  lhr_all <- c(lhr_all, lhr)
+}
+lm(y[,2]~y[,1]) %>% abline(col='black', lwd=1.75, lty=2)
+legend(x=-3,y=3, legend=data.use$des, col = cols, pch=19, bty='n')
+
+# lm(lhr~lor) %>% abline(col='black', lwd=1.5, lty=2)
+
+```
+
