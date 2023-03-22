@@ -202,65 +202,67 @@ p.cut<-.15
 Nmix    <- Nexch + 1
 
 obs.orrs <- c(.05, .1, .15, .2, .25, .3, .35) # would-be observed ORR from expansion cohort
-npt      <- 25 # number of patients from expansion cohort
+npt      <- c(20, 25, 30) # number of patients from expansion cohort
 
 data_binary_exnex_model_dw <- binary_exnex_jag_dw <- binary_exnex_mcmc_dw <- list()
 
 
 ## Run JAGs
-for (id in 1:length(obs.orrs)) {
+for (id0 in 1:length(npt)) {
+  data_binary_exnex_model_dw[[id0]] <- binary_exnex_jag_dw[[id0]] <- binary_exnex_mcmc_dw[[id0]] <- list()
   
-  print(paste0('Observed ORR = ', obs.orrs[id]))
-  
-  orr <- obs.orrs[id]
-  n   <- c(data.use$n_a, npt)
-  r   <- c(data.use$res_a, orr*npt) %>% round
-  
-  Nstrata <- n %>% length
-  
-  data_binary_exnex_model_dw[[id]]<- list(Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata,
-                                          n=n, r=r,
-                                          mu.mean=mu.mean, mu.prec=mu.prec,
-                                          tau.HN.scale=tau.HN.scale,
-                                          # nex.mean=nex.mean, nex.prec=nex.prec, 
-                                          p.cut=p.cut
-                                          )
-  ### Inits
-  inits_binary_exnex_model_dw <- function() {
-    pMix0 <- rbeta(Nmix*Nstrata, 2, 2) %>% matrix(nrow=Nstrata) %>% t
-    for (nc in 1:ncol(pMix0)) {
-      pMix0[,nc] <- pMix0[,nc] / sum(pMix0[,nc])
-    }
+  for (id in 1:length(obs.orrs)) {
     
-    list(
-      "mu"=rnorm(Nexch),
-      "tau"=rnorm(Nexch) %>% abs,
-      "pMix0"=pMix0
-      )  
-  } # end of inits_binary_exnex_model_dw  
-  
-  # JAGS
-  set.seed(36)
-  binary_exnex_jag_dw[[id]] <- jags(data = data_binary_exnex_model_dw[[id]], 
-                                  inits = inits_binary_exnex_model_dw, 
-                                  parameters.to.save = parameters_binary_exnex_model_dw,
-                                  model.file = "binary_exnex_model_dw.bug",
-                                  n.chains=3, n.iter=1e4, n.burnin=5e3)
-  # print(binary_exnex_jag_dw)
-  
-  binary_exnex_mcmc_dw[[id]] <- binary_exnex_jag_dw[[id]] %>% as.mcmc.rjags
-  binary_exnex_mcmc_dw[[id]] %>% summary %>% print
-  
-  ### Credible interval for selected parameters
-  mcmcplots::caterplot(binary_exnex_jag_dw[[id]], parms = c('p'))  
-  
-  ### Density plot for posterior logit alone
-  par(ask=F)
-  mcmcplots::denplot(binary_exnex_jag_dw[[id]], parms = c(paste0('logit_p[', Nstrata, ']')), collapse = T, lwd=2,xlim=c(-15,15), style ='plain', main='Posterior distribution of true ORR', frame.plot=F)
-  
-} # end of for (id in 1:length(obs.orrs))
-
-
+    print(paste0('Observed ORR = ', obs.orrs[id]))
+    
+    orr <- obs.orrs[id]
+    n   <- c(data.use$n_a, npt[id0])
+    r   <- c(data.use$res_a, orr*npt[id0]) %>% round
+    
+    Nstrata <- n %>% length
+    
+    data_binary_exnex_model_dw[[id0]][[id]]<- list(Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata,
+                                            n=n, r=r,
+                                            mu.mean=mu.mean, mu.prec=mu.prec,
+                                            tau.HN.scale=tau.HN.scale,
+                                            # nex.mean=nex.mean, nex.prec=nex.prec, 
+                                            p.cut=p.cut
+                                            )
+    ### Inits
+    inits_binary_exnex_model_dw <- function() {
+      pMix0 <- rbeta(Nmix*Nstrata, 2, 2) %>% matrix(nrow=Nstrata) %>% t
+      for (nc in 1:ncol(pMix0)) {
+        pMix0[,nc] <- pMix0[,nc] / sum(pMix0[,nc])
+      }
+      
+      list(
+        "mu"=rnorm(Nexch),
+        "tau"=rnorm(Nexch) %>% abs,
+        "pMix0"=pMix0
+        )  
+    } # end of inits_binary_exnex_model_dw  
+    
+    # JAGS
+    set.seed(36)
+    binary_exnex_jag_dw[[id0]][[id]] <- jags(data = data_binary_exnex_model_dw[[id0]][[id]], 
+                                    inits = inits_binary_exnex_model_dw, 
+                                    parameters.to.save = parameters_binary_exnex_model_dw,
+                                    model.file = "binary_exnex_model_dw.bug",
+                                    n.chains=3, n.iter=1e4, n.burnin=5e3)
+    # print(binary_exnex_jag_dw)
+    
+    binary_exnex_mcmc_dw[[id0]][[id]] <- binary_exnex_jag_dw[[id0]][[id]] %>% as.mcmc.rjags
+    binary_exnex_mcmc_dw[[id0]][[id]] %>% summary %>% print
+    
+    ### Credible interval for selected parameters
+    mcmcplots::caterplot(binary_exnex_jag_dw[[id0]][[id]], parms = c('p'))  
+    
+    ### Density plot for posterior logit alone
+    par(ask=F)
+    mcmcplots::denplot(binary_exnex_jag_dw[[id0]][[id]], parms = c(paste0('logit_p[', Nstrata, ']')), collapse = T, lwd=2,xlim=c(-15,15), style ='plain', main='Posterior distribution of true ORR', frame.plot=F)
+    
+  } # end of for (id in 1:length(obs.orrs))  
+} # end of for (id0 in 1:length(npt[id0]))
 
 ### Run MCMC
 ```
@@ -383,56 +385,62 @@ for (prior in priors) {
   )
   
   pMix <- pMix %>% rep(Nmix) %>% matrix(nrow=Nmix, byrow = F)
+  for (id0 in 1:length(npt)) {
+    
+    data_binary_exnex_model_fw[[prior]][[id0]] <- binary_exnex_jag_fw[[prior]][[id0]] <-
+    binary_exnex_mcmc_fw[[prior]][[id0]]       <- list()   
+    
+    for (id in 1:length(obs.orrs)) {
+      print(paste0(prior, 'Prior and Observed ORR = ', obs.orrs[id]))
+      
+      orr <- obs.orrs[id]
+      n   <- c(data.use$n_a, npt[id0])
+      r   <- c(data.use$res_a, orr*npt[id0]) %>% round
+      
+      Nstrata <- n %>% length
+      
+      data_binary_exnex_model_fw[[prior]][[id0]][[id]] <- list(
+        pMix=pMix, Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata, n=n, r=r, 
+        mu.mean=mu.mean, mu.prec=mu.prec, tau.HN.scale=tau.HN.scale,
+        # nex.mean=nex.mean, nex.prec=nex.prec, 
+        p.cut=p.cut
+        )
+      
+      ### Inits
+      inits_binary_exnex_model_fw <- function() {
   
-  for (id in 1:length(obs.orrs)) {
-    print(paste0(prior, 'Prior and Observed ORR = ', obs.orrs[id]))
-    
-    orr <- obs.orrs[id]
-    n   <- c(data.use$n_a, npt)
-    r   <- c(data.use$res_a, orr*npt) %>% round
-    
-    Nstrata <- n %>% length
-    
-    data_binary_exnex_model_fw[[prior]][[id]] <- list(
-      pMix=pMix, Nexch=Nexch, Nmix=Nmix, Nstrata=Nstrata, n=n, r=r, 
-      mu.mean=mu.mean, mu.prec=mu.prec, tau.HN.scale=tau.HN.scale,
-      # nex.mean=nex.mean, nex.prec=nex.prec, 
-      p.cut=p.cut
-      )
-    
-    ### Inits
-    inits_binary_exnex_model_fw <- function() {
+        list(
+          "mu"=rnorm(Nexch),
+          "tau"=rnorm(Nexch) %>% abs
+          )  
+      } # end of inits_binary_exnex_model_fw  
+      
+      #### JAGS
+      set.seed(36)
+      binary_exnex_jag_fw[[prior]][[id0]][[id]] <- jags(
+        data = data_binary_exnex_model_fw[[prior]][[id0]][[id]], 
+        inits = inits_binary_exnex_model_fw, 
+        parameters.to.save = parameters_binary_exnex_model_fw,
+        model.file = "binary_exnex_model_fw.bug",
+        n.chains=3, n.iter=1e4, n.burnin=5e3)
+      # print(binary_exnex_jag_fw[[prior]])
+      
+      binary_exnex_mcmc_fw[[prior]][[id0]][[id]] <- binary_exnex_jag_fw[[prior]][[id0]][[id]] %>% as.mcmc.rjags
+      binary_exnex_mcmc_fw[[prior]][[id0]][[id]] %>% summary %>% print
+      
+      ### Credible interval for selected parameters
+      mcmcplots::caterplot(binary_exnex_jag_fw[[prior]][[id0]][[id]], parms = c('p'))  
+      
+      ### Density plot for posterior logit alone
+      par(ask=F)
+      mcmcplots::denplot(binary_exnex_jag_fw[[prior]][[id0]][[id]], parms = c(paste0('logit_p[', Nstrata, ']')), collapse = T, lwd=2,xlim=c(-15,15), style ='plain', main='Posterior distribution of true ORR', frame.plot=F)
+      # axis(1, seq(-15,15,5),
+      #      labels=inv.logit(seq(-15,15,5)) %>% round(4), line=7)
+      # mtext("ORR",1,line=9,at=0)    
+      
+    } # end of for (id in 1:length(obs.orrs))      
+  } # end of for (id0 in 1:length(npt))
 
-      list(
-        "mu"=rnorm(Nexch),
-        "tau"=rnorm(Nexch) %>% abs
-        )  
-    } # end of inits_binary_exnex_model_fw  
-    
-    #### JAGS
-    set.seed(36)
-    binary_exnex_jag_fw[[prior]][[id]] <- jags(
-      data = data_binary_exnex_model_fw[[prior]][[id]], 
-      inits = inits_binary_exnex_model_fw, 
-      parameters.to.save = parameters_binary_exnex_model_fw,
-      model.file = "binary_exnex_model_fw.bug",
-      n.chains=3, n.iter=1e4, n.burnin=5e3)
-    # print(binary_exnex_jag_fw[[prior]])
-    
-    binary_exnex_mcmc_fw[[prior]][[id]] <- binary_exnex_jag_fw[[prior]][[id]] %>% as.mcmc.rjags
-    binary_exnex_mcmc_fw[[prior]][[id]] %>% summary %>% print
-    
-    ### Credible interval for selected parameters
-    mcmcplots::caterplot(binary_exnex_jag_fw[[prior]][[id]], parms = c('p'))  
-    
-    ### Density plot for posterior logit alone
-    par(ask=F)
-    mcmcplots::denplot(binary_exnex_jag_fw[[prior]][[id]], parms = c(paste0('logit_p[', Nstrata, ']')), collapse = T, lwd=2,xlim=c(-15,15), style ='plain', main='Posterior distribution of true ORR', frame.plot=F)
-    # axis(1, seq(-15,15,5),
-    #      labels=inv.logit(seq(-15,15,5)) %>% round(4), line=7)
-    # mtext("ORR",1,line=9,at=0)    
-    
-  } # end of for (id in 1:length(obs.orrs))  
 } # end of for (prior in priors)
 
 
@@ -518,56 +526,61 @@ mtext("ORR",1,line=7,at=0)
 
 
 
-```{r echo=TRUE}
-out_tab_p.success <- matrix(NA, ncol=obs.orrs %>% length, nrow=Nmix+1)
-rownames(out_tab_p.success) <- c(priors, "Mix")
-colnames(out_tab_p.success) <- obs.orrs
-
-
-out_tab_p <- out_tab_logit <- out_tab_p.failure <- out_tab_p.success
-
-for (id1 in 1:(Nmix+1)) {
+```{r echo=TRUE, results='asis'}
+for (id0 in 1:length(npt)) {
   
-  prior <- priors[id1]
+  out_tab_p.success <- matrix(NA, ncol=obs.orrs %>% length, nrow=Nmix+1)
+  rownames(out_tab_p.success) <- c(priors, "Mix")
+  colnames(out_tab_p.success) <- obs.orrs
+
+  out_tab_p <- out_tab_logit <- out_tab_p.failure <- out_tab_p.success
   
-  for (id2 in 1:length(obs.orrs)) {
+  for (id1 in 1:(Nmix+1)) {
     
-    obs.orr <- obs.orrs[id2]
+    prior <- priors[id1]
     
-    if (id1<= Nmix) {
-      out_tab_p.success[id1, id2] <- 
-      binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$mean$p.success[[Nstrata]]
+    for (id2 in 1:length(obs.orrs)) {
       
-      out_tab_p.failure[id1, id2] <- 
-      binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]      
+      obs.orr <- obs.orrs[id2]
       
-      out_tab_logit[id1, id2] <- paste0(binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,1] %>% round(2), ' (',binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,3] %>% round(2),', ', binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata+1,7] %>% round(2),')' ) 
-      
-      out_tab_p[id1, id2] <- paste0(binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %>% round(2), ' (',binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %>% round(2),', ', binary_exnex_jag_fw[[prior]][[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %>% round(2),')' )       
-      
-    } else {
-      out_tab_p.success[id1, id2] <- 
-      binary_exnex_jag_dw[[id2]]$BUGSoutput$mean$p.success[[Nstrata]]  
-      
-      out_tab_p.failure[id1, id2] <- 
-      binary_exnex_jag_dw[[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]       
-      
-      out_tab_logit[id1, id2] <- paste0(binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,1] %>% round(2), ' (',binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,3] %>% round(2),', ', binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata+1,7] %>% round(2),')' ) 
-      
-      out_tab_p[id1, id2] <- paste0(binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %>% round(2), ' (',binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %>% round(2),', ', binary_exnex_jag_dw[[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %>% round(2),')' )      
-    } # end of if (id1<= Nmix) else ...
-
-  } # end of for (id2 in 1:length(obs.orrs))
+      if (id1<= Nmix) {
+        out_tab_p.success[id1, id2] <- 
+        binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$mean$p.success[[Nstrata]]
+        
+        out_tab_p.failure[id1, id2] <- 
+        binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]      
+        
+        out_tab_logit[id1, id2] <- paste0(binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$summary[Nstrata+1,1] %>% round(2), ' (',binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$summary[Nstrata+1,3] %>% round(2),', ', binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$summary[Nstrata+1,7] %>% round(2),')' ) 
+        
+        out_tab_p[id1, id2] <- paste0(binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %>% round(2), ' (',binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %>% round(2),', ', binary_exnex_jag_fw[[prior]][[id0]][[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %>% round(2),')' )       
+        
+      } else {
+        out_tab_p.success[id1, id2] <- 
+        binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$mean$p.success[[Nstrata]]  
+        
+        out_tab_p.failure[id1, id2] <- 
+        binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$mean$p.failure[[Nstrata]]       
+        
+        out_tab_logit[id1, id2] <- paste0(binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$summary[Nstrata+1,1] %>% round(2), ' (',binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$summary[Nstrata+1,3] %>% round(2),', ', binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$summary[Nstrata+1,7] %>% round(2),')' ) 
+        
+        out_tab_p[id1, id2] <- paste0(binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$summary[Nstrata*2+1,1] %>% round(2), ' (',binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$summary[Nstrata*2+1,3] %>% round(2),', ', binary_exnex_jag_dw[[id0]][[id2]]$BUGSoutput$summary[Nstrata*2+1,7] %>% round(2),')' )      
+      } # end of if (id1<= Nmix) else ...
   
-} # end of for (id1 in 1:(Nmix+1)) 
+    } # end of for (id2 in 1:length(obs.orrs))
+    
+  } # end of for (id1 in 1:(Nmix+1)) 
+  
+  out_tab_p.success %>% kable(digits=2, caption = paste('Posterior probability of true ORR $>$', p.cut, 'N=', npt[id0]), format='html')  %>% kable_styling(full_width = F, position = 'center')  %>% print
+  
+  out_tab_p.failure %>% kable(digits=2, caption = paste('Posterior probability of true ORR $<$', p.cut, 'N=', npt[id0]), format='html')  %>% kable_styling(full_width = F, position = 'center')  %>% print
+  
+  out_tab_p %>% kable(digits=2, caption=paste0('Posterior mean and 95% credible interval for true ORR ', 'N=', npt[id0]), format='html')  %>% kable_styling(full_width = F, position = 'center')  %>% print
+  
+  out_tab_logit %>% kable(digits=2, caption=paste0('Posterior mean and 95% credible interval for log-odd (logit) of true ORR ', 'N=', npt[id0]), format='html')  %>% kable_styling(full_width = F, position = 'center')  %>% print
+  
+} # end of for (id0 in 1:length(npt))
 
-out_tab_p.success %>% kable(digits=2, caption = paste('Posterior probability of true ORR $>$', p.cut))  %>% kable_styling(full_width = F, position = 'center')
 
-out_tab_p.failure %>% kable(digits=2, caption = paste('Posterior probability of true ORR $<$', p.cut))  %>% kable_styling(full_width = F, position = 'center')
-
-out_tab_p %>% kable(digits=2, caption='Posterior mean and 95% credible interval for true ORR')  %>% kable_styling(full_width = F, position = 'center')
-
-out_tab_logit %>% kable(digits=2, caption='Posterior mean and 95% credible interval for log-odd (logit) of true ORR')  %>% kable_styling(full_width = F, position = 'center')
 
 # to-do: add summary table for Rhat and n_eff
 ```
